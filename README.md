@@ -1,6 +1,6 @@
 # SimpleCompass
 
-Smallcompass is a small plugin for [Spigot](https://www.spigotmc.org) Minecraft servers. It allows to display one (or two) compass in the action bar / boss bar area. Players can easily change their settings with a single command, then click on the wanted option(s). Options are: Use always the compass, never or in only on elytra / vehicle.
+SimpleCompass is a small plugin for [Spigot](https://www.spigotmc.org) Minecraft servers. It allows to display one (or two) compass in the action bar / boss bar area. Players can easily change their settings with a single command, then click on the wanted option(s). Options are: Use always the compass, never or in only on elytra / vehicle.
 
 ## How to install
 
