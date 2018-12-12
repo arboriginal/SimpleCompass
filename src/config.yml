@@ -1,42 +1,104 @@
+# Those settings are applyed to players who have not use /scompass-option.
+#
+# Available values are:
+# - ALWAYS          The compass will always be visible
+# - ELYTRA          The compass will be visible only when gliding with elytras
+# - VEHICLE         The compass will be visible only when in a vehicle (horse, boat, ...)
+# - ELYTRA_VEHICLE  Combination of ELYTRA and VEHICLE
+# - DISABLED        The compass will not be displayed
+#
+default_settings:
+  ACTIONBAR: VEHICLE
+  BOSSBAR: ELYTRA
+
+# You decide if your players can use both compass at the same time, or only one.
+# In this case, you have to use « DISABLED » in one of the « default_settings »'s type.
+# 
+# This will NOT disallow the use of the other one. It simply act like a switch:
+# If you activate ACTIONBAR, it will disable BOSSBAR.
+# If you activate BOSSBAR, it will disable ACTIONBAR.
+#
+# If you want to restrict the use to a single type of compass, you can do it with permissions.
+single_compass_mode: false
+
+# In all this configuration file, you can use colors with « & » followed with a number / letter:
+# from 0 (black) to r (reset). See this link: https://wiki.ess3.net/mc/
+
 compass:
+  # Settings for acionbar compass
+  ACTIONBAR:
+    before: "§8--== [ "             # Compass: <before> <sep> W <sep> N <sep> E <sep> S <sep> <after>
+    separator_value: " ■ ■ ☗ ■ ■ "  # The separator (<sep>) can work with odd and even number of chars...
+    separator_color: "§7"           # Color of separators
+    inactive_color: "§1"            # Color of cardinals you're not facing
+    active_color: "§6§l"            # Color of the cardinal you"re facing
+    north_color: "§4"               # Color of the North (because it's always different on compasses...
+    active_north_color: "§4§l"      # Color of the Nothe if you are facing it.
+    after: " §8] ==--"
+    cardinals: # Those four cardinal points should be 1 char (will works otherwise but could be less precise)
+      north: "N"
+      east: "E"
+      west: "W"
+      south: "S"
+      
   # Settings for bossbar compass
-  bossbar:
-    enable: true
+  BOSSBAR:
     before: "§8[ "
-    separator_value: " ▴  ▲  ▴ "
+    separator_value: " ▴  ▲  ▴ "   # Look at ACTIONBAR for explanation, it's the same...
     separator_color: "§7"
     inactive_color: "§3"
     active_color: "§e§l"
     north_color: "§6"
     active_north_color: "§6§l"
     after: " §8]"
-    cardinals: # Those for cardinal points must be 1 char (will works otherwise but )
+    cardinals: # Those four cardinal points should be 1 char (will works otherwise but could be less precise)
       north: "N"
       east: "E"
       west: "W"
       south: "S"
-    attributes:
-      color: YELLOW
-      style: SOLID
-      
-  # Settings for acionbar compass
-  actionbar:
-    enable: true
-    before: "§8--== [ "
-    separator_value: " ■ ■ ☗ ■ ■ "
-    separator_color: "§7"
-    inactive_color: "§1"
-    active_color: "§6§l"
-    north_color: "§4"
-    active_north_color: "§4§l"
-    after: " §8] ==--"
-    cardinals:
-      north: "N"
-      east: "E"
-      west: "W"
-      south: "S"
+    attributes: # Specific to bossbas...
+      color: YELLOW # available values: https://hub.spigotmc.org/javadocs/spigot/org/bukkit/boss/BarColor.html  (or error invalid_bossbar_color)
+      style: SOLID  # available values: https://hub.spigotmc.org/javadocs/spigot/org/bukkit/boss/BarStyle.html  (or error invalid_bossbar_style)
+
+# Prefix used in all text messages (and errors), can be an empty string to disable it globally...
+prefix: "&8[&eSimpleCompass&8] "  # But you can also decide to remove the {prefix} part in specific messages.
+
+# BEWARE: When you see « {word} », this is a placeholder! So you have to let it like that (not translated, not customised),
+# Otherwise, the plugin will not be able to substitute the dynamic value it represents.
 
 messages:
-  invalid_bossbar_color: Invalid bossbar color, using default
-  invalid_bossbar_style: Invalid bossbar style, using default
-  configuration_reloaded: Configuration successfully reloaded
+  configuration_reloaded: "{prefix}&aConfiguration successfully reloaded" # When using /scompass-reload
+  options: # Human name for the options displayed whith /scompass-option without arguments (clickable)
+    ALWAYS: "Always"
+    ELYTRA: "Elytra"
+    VEHICLE: "In vehicle"
+    ELYTRA_VEHICLE: "Elytra + vehicle"
+    DISABLED: "Off"
+  types: # Human name compass' types, displayed when using /scompass-option without arguments
+    ACTIONBAR: "Action bar"
+    BOSSBAR: "Boss bar"
+  status: # You can customize the status of player's options here
+    options_header: "{prefix}&8--------------------------------------" # First row
+    option_title: "&f ⚙ Compass for &c&l{type}&f:"                     # Name of the compass type
+    option_on: " &7[&a&l{option}&7]"                                   # Enabled option
+    option_off: " &7[&3{option}&7]"                                    # Disabled option
+    option_hover: "&6Click to choose &a&l{option}&6\n&6for &c&l{type}" # Hover text on options
+    options_separator: "&8."                                           # Line between type's options
+    options_footer: "&8------------------- &7(click an option to edit your choice)&8 --" # Last row
+  settings_saved: | # Here is the message displayed when the user click on an option to change his settings
+    &8.
+    &8.
+    {prefix}&aYour new settings have been saved.
+    &8.
+    &8.
+
+errors:
+  command_only_for_players: "{prefix}&cThis command can only be executed by a player!"   # /scompass-option cannot be executed in the console... Sorry.
+  invalid_bossbar_color: "{prefix}&cInvalid bossbar color, using default"                # If you did a mistake in the bossbar color configuration
+  invalid_bossbar_style: "{prefix}&cInvalid bossbar style, using default"                # If you did a mistake in the bossbar style configuration
+  invalid_choice: "{prefix}&cInvalid default choice for {type}, using default"           # See « default_settings » ...
+  file_not_writable: "{prefix}&cUnable to write the users' datas file..."                # Cannot create or write into plugins/SimpleCompass/usersDatas.yml
+  wrong_usage: "{prefix}&cWrong usage of the command!"                                   # ...
+  invalid_option: "{prefix}&6{option} &cis an invalid compass option!"                   # In case of players tries to type strange options
+  invalid_type: "{prefix}&6{type} &cis an invalid compass type!"                         # Same for compass types
+  missing_type: "{prefix}&6You must specify on which type you want to set this option!"  # When the command is used in a short form but when ambigous...

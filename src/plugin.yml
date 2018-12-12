@@ -1,6 +1,6 @@
 name: SimpleCompass
 description: Simple compass to help player who don't have sense of direction.
-version: 0.1
+version: 0.2
 
 author: arboriginal
 #website: https://www.spigotmc.org/resources/playerrider.62799/
@@ -18,8 +18,46 @@ commands:
   scompass-reload:
     description: Reload SimpleCompass configuration
     permission: scompass.reload
+    
+  scompass-option:
+    description: Choose personal options for SimpleCompass
+    permission: scompass.use
+    # Also require scompass.use.ACTIONBAR or scompass.use.BOSSBAR or both, and at least an option
+    usage: /<command> [<[option] [type]>]
 
 permissions:
   scompass.reload:
       description: Allows to reload the configuration.
       default: op
+      
+  scompass.use:
+      description: Allows to use compass.
+      default: true
+      
+  scompass.use.ACTIONBAR: # Require scompass.use
+      description: Allows to use actionbar compass.
+      default: true
+      
+  scompass.use.BOSSBAR: # Require scompass.use
+      description: Allows to use bossbar compass.
+      default: true
+      
+  scompass.option.ALWAYS:
+      description: Allows to use the option "Always activated".
+      default: true
+      
+  scompass.option.ELYTRA:
+      description: Allows to use the option "Only activated when using elytra".
+      default: true
+      
+  scompass.option.ELYTRA_VEHICLE:
+      description: Allows to use the option "Only activated when using elytra or when a vehicle".
+      default: true
+      
+  scompass.option.VEHICLE:
+      description: Allows to use the option "Only activated when on a vehicle".
+      default: true
+      
+  scompass.option.DISABLED:
+      description: Allows to use the option "Disabled".
+      default: true
