@@ -1,0 +1,25 @@
+name: SimpleCompass
+description: Simple compass to help player who don't have sense of direction.
+version: 0.1
+
+author: arboriginal
+#website: https://www.spigotmc.org/resources/playerrider.62799/
+dev-url: https://github.com/arboriginal/SimpleCompass
+
+depend: [ ]
+softdepend: [ ]
+
+api-version: 1.13
+database: false
+
+main: me.arboriginal.SimpleCompass.Main
+
+commands:
+  scompass-reload:
+    description: Reload SimpleCompass configuration
+    permission: scompass.reload
+
+permissions:
+  scompass.reload:
+      description: Allows to reload the configuration.
+      default: op

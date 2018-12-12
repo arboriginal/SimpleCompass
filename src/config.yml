@@ -1,0 +1,42 @@
+compass:
+  # Settings for bossbar compass
+  bossbar:
+    enable: true
+    before: "§8[ "
+    separator_value: " ▴  ▲  ▴ "
+    separator_color: "§7"
+    inactive_color: "§3"
+    active_color: "§e§l"
+    north_color: "§6"
+    active_north_color: "§6§l"
+    after: " §8]"
+    cardinals: # Those for cardinal points must be 1 char (will works otherwise but )
+      north: "N"
+      east: "E"
+      west: "W"
+      south: "S"
+    attributes:
+      color: YELLOW
+      style: SOLID
+      
+  # Settings for acionbar compass
+  actionbar:
+    enable: true
+    before: "§8--== [ "
+    separator_value: " ■ ■ ☗ ■ ■ "
+    separator_color: "§7"
+    inactive_color: "§1"
+    active_color: "§6§l"
+    north_color: "§4"
+    active_north_color: "§4§l"
+    after: " §8] ==--"
+    cardinals:
+      north: "N"
+      east: "E"
+      west: "W"
+      south: "S"
+
+messages:
+  invalid_bossbar_color: Invalid bossbar color, using default
+  invalid_bossbar_style: Invalid bossbar style, using default
+  configuration_reloaded: Configuration successfully reloaded
