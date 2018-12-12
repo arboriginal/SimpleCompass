@@ -17,4 +17,4 @@ All permissions are listed with a short description in this [plugin.yml](https:/
 * **/scompass-reload** will reload the configuration
 * **/scompass-option** will show the menu to choose where and when display the compass
 
-You can use **/scompass-option** with arguments directly if you prefer (/scompass-option <option> <type>).
+You can use **/scompass-option** with arguments directly if you prefer (`/scompass-option <option> <type>`).
