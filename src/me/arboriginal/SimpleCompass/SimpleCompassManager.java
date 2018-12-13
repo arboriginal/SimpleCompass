@@ -1,12 +1,16 @@
 package me.arboriginal.SimpleCompass;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.UUID;
 import org.bukkit.Bukkit;
 import org.bukkit.boss.BarColor;
 import org.bukkit.boss.BarStyle;
 import org.bukkit.boss.BossBar;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.PlayerInventory;
+import org.bukkit.scheduler.BukkitRunnable;
 import me.arboriginal.SimpleCompass.SimpleCompassUsersDatas.types;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
@@ -14,18 +18,27 @@ import net.md_5.bungee.api.chat.TextComponent;
 public class SimpleCompassManager {
   private Main plugin;
 
+  public enum sections {
+    OFF_HAND,
+    MAIN_HAND,
+    HOTBAR,
+    INVENTORY,
+  };
+
   public HashMap<types, HashMap<UUID, Object>> compasses;
+  public HashMap<UUID, BossBar>                noFuelWarns;
 
   public SimpleCompassManager(Main main) {
-    plugin    = main;
-    compasses = new HashMap<types, HashMap<UUID, Object>>();
+    plugin      = main;
+    compasses   = new HashMap<types, HashMap<UUID, Object>>();
+    noFuelWarns = new HashMap<UUID, BossBar>();
 
     for (types type : SimpleCompassUsersDatas.types.values()) {
       compasses.put(type, new HashMap<UUID, Object>());
     }
   }
 
-  private void createCompass(Player player, types type) {
+  public Object createCompass(Player player, types type, boolean managed) {
     Object compass;
 
     switch (type) {
@@ -34,6 +47,8 @@ public class SimpleCompassManager {
         break;
 
       case BOSSBAR:
+        removePlayerWarnNoFuel(player);
+
         compass = Bukkit.createBossBar(buildDatas(player, type),
             BarColor.valueOf(Main.config.getString("compass.BOSSBAR.attributes.color")),
             BarStyle.valueOf(Main.config.getString("compass.BOSSBAR.attributes.style")));
@@ -43,10 +58,12 @@ public class SimpleCompassManager {
         break;
 
       default:
-        return;
+        return null;
     }
 
-    compasses.get(type).put(player.getUniqueId(), compass);
+    if (managed) compasses.get(type).put(player.getUniqueId(), compass);
+
+    return compass;
   }
 
   public Object getCompass(UUID uid, types type) {
@@ -66,6 +83,10 @@ public class SimpleCompassManager {
   }
 
   public void updateState(Player player) {
+    updateState(player, true);
+  }
+
+  public void updateState(Player player, boolean consume) {
     for (types type : SimpleCompassUsersDatas.types.values()) {
       removeCompass(player.getUniqueId(), type);
 
@@ -94,7 +115,8 @@ public class SimpleCompassManager {
           break;
       }
 
-      if (needed) createCompass(player, type);
+      if (needed && hasRequirements(player, type, consume && shouldConsume(player, type)))
+        createCompass(player, type, true);
     }
   }
 
@@ -104,18 +126,143 @@ public class SimpleCompassManager {
 
       if (compass == null) continue;
 
-      String datas = buildDatas(player, type);
-
-      switch (type) {
-        case ACTIONBAR:
-          player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(datas));
-          break;
-
-        case BOSSBAR:
-          ((BossBar) compass).setTitle(datas);
-          break;
+      if (!hasRequirements(player, type, true) && shouldRemove(player, type)) {
+        removeCompass(player.getUniqueId(), type);
+        warnPlayerNoFuel(player, type);
+        continue;
       }
+
+      sendCompassDatas(player, type, compass, buildDatas(player, type));
     }
+  }
+
+  public void sendCompassDatas(Player player, types type, Object compass, String datas) {
+    switch (type) {
+      case ACTIONBAR:
+        player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(datas));
+        break;
+
+      case BOSSBAR:
+        if (compass instanceof BossBar) ((BossBar) compass).setTitle(datas);
+        break;
+    }
+  }
+
+  public boolean hasRequirements(Player player, types type, boolean consume) {
+    if (!player.hasPermission("scompass.use." + type)) return false;
+    if (player.hasPermission("scompass.use.free")) return true;
+
+    boolean requirements = false;
+
+    for (sections section : sections.values()) {
+      List<?> list = Main.config.getList("compass." + type + ".require." + section);
+
+      if (list.size() == 0) continue;
+
+      if (hasRequiredItem(player, type, section, consume, list)) return true;
+
+      requirements = true;
+    }
+
+    return !requirements;
+  }
+
+  public boolean hasRequiredItem(Player player, types type, sections section, boolean consume) {
+    return hasRequiredItem(player, type, section, consume,
+        Main.config.getList("compass." + type + ".require." + section));
+  }
+
+  public boolean hasRequiredItem(Player player, types type, sections section, boolean consume, List<?> required) {
+    boolean         found = false;
+    PlayerInventory inv   = player.getInventory();
+    ItemStack       stack;
+
+    switch (section) {
+      case OFF_HAND:
+        stack = inv.getItemInOffHand();
+
+        if (stack != null && (found = required.contains(stack.getType().toString()))
+            && consume && shouldConsume(player, type))
+          inv.setItemInOffHand(consumeItem(player, type, stack));
+        break;
+
+      case MAIN_HAND:
+        stack = inv.getItemInMainHand();
+
+        if (stack != null && (found = required.contains(stack.getType().toString()))
+            && consume && shouldConsume(player, type))
+          inv.setItemInMainHand(consumeItem(player, type, stack));
+        break;
+
+      case HOTBAR:
+      case INVENTORY:
+        for (int i = (section.equals(sections.HOTBAR) ? 0 : 9); i <= (section.equals(sections.HOTBAR) ? 8 : 35); i++) {
+          stack = inv.getItem(i);
+
+          if (stack == null) continue;
+
+          if (found = required.contains(stack.getType().toString())) {
+            if (consume && shouldConsume(player, type))
+              inv.setItem(i, consumeItem(player, type, stack));
+            break;
+          }
+        }
+        break;
+    }
+
+    return found;
+  }
+
+  public void warnPlayerNoFuel(Player player, types type) {
+    String message = Main.config.getString("compass." + type + ".require_settings.warnPlayerNoFuel");
+
+    if (message.isEmpty()) return;
+
+    Object compass = createCompass(player, type, false);
+
+    if (compass instanceof BossBar) {
+      noFuelWarns.put(player.getUniqueId(), (BossBar) compass);
+
+      new BukkitRunnable() {
+        @Override
+        public void run() {
+          if (isCancelled()) return;
+
+          removePlayerWarnNoFuel(player);
+        }
+      }.runTaskLaterAsynchronously(plugin, Main.config.getInt("compass." + type + ".require_settings.warnDuration",
+          Main.config.getDefaults().getInt("compass." + type + ".require_settings.warnDuration")) * 20);
+    }
+
+    sendCompassDatas(player, type, compass, plugin.formatMessage(message));
+  }
+
+  public void removePlayerWarnNoFuel(Player player) {
+    UUID uid = player.getUniqueId();
+
+    if (noFuelWarns.containsKey(uid)) {
+      BossBar warning = noFuelWarns.get(uid);
+
+      warning.removeAll();
+      noFuelWarns.remove(uid);
+    }
+  }
+
+  public boolean shouldConsume(Player player, types type) {
+    return Main.config.getBoolean("compass." + type + ".require_settings.consume", false)
+        && plugin.udm.getConsumeCooldown(player, type) == 0;
+  }
+
+  public boolean shouldRemove(Player player, types type) {
+    return !Main.config.getBoolean("compass." + type + ".require_settings.consume", false)
+        || plugin.udm.getConsumeCooldown(player, type) == 0;
+  }
+
+  public ItemStack consumeItem(Player player, types type, ItemStack stack) {
+    stack.setAmount(stack.getAmount() - 1);
+    plugin.udm.setConsumeCooldown(player, type);
+
+    return stack;
   }
 
   private String buildDatas(Player player, types type) {

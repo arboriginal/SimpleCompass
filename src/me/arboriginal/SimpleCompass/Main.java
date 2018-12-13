@@ -1,6 +1,9 @@
 package me.arboriginal.SimpleCompass;
 
+import java.util.ArrayList;
+import java.util.List;
 import org.bukkit.ChatColor;
+import org.bukkit.Material;
 import org.bukkit.boss.BarColor;
 import org.bukkit.boss.BarStyle;
 import org.bukkit.command.Command;
@@ -10,6 +13,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.UnmodifiableIterator;
+import me.arboriginal.SimpleCompass.SimpleCompassManager.sections;
 import me.arboriginal.SimpleCompass.SimpleCompassUsersDatas.types;
 
 public class Main extends JavaPlugin {
@@ -31,6 +35,19 @@ public class Main extends JavaPlugin {
 
     getServer().getPluginManager().registerEvents(new SimpleCompassListener(this), this);
     getCommand("scompass-option").setExecutor(new SimpleCompassCommand(this));
+
+    for (Player player : getServer().getOnlinePlayers())
+      scm.updateState(player);
+  }
+
+  @Override
+  public void onDisable() {
+    for (Player player : getServer().getOnlinePlayers()) {
+      scm.removePlayerWarnNoFuel(player);
+
+      for (types type : SimpleCompassUsersDatas.types.values())
+        scm.removeCompass(player.getUniqueId(), type);
+    }
   }
 
   @Override
@@ -50,7 +67,7 @@ public class Main extends JavaPlugin {
       reloadConfig();
 
       for (Player player : getServer().getOnlinePlayers())
-        scm.updateState(player);
+        scm.updateState(player, false);
 
       sender.sendMessage(prepareMessage("messages.configuration_reloaded"));
 
@@ -79,7 +96,19 @@ public class Main extends JavaPlugin {
       }
     }
 
-    return ChatColor.translateAlternateColorCodes('&', message.replace("{prefix}", config.getString("prefix")));
+    return formatMessage(message.replace("{prefix}", config.getString("prefix")));
+  }
+
+  String formatMessage(String message) {
+    return ChatColor.translateAlternateColorCodes('&', message);
+  }
+
+  // ----------------------------------------------------------------------------------------------
+  // Custom public methods
+  // ----------------------------------------------------------------------------------------------
+
+  Long getCurrentTime() {
+    return System.currentTimeMillis();
   }
 
   // ----------------------------------------------------------------------------------------------
@@ -105,7 +134,7 @@ public class Main extends JavaPlugin {
           config.getDefaults().getString("compass.BOSSBAR.attributes.style"));
     }
 
-    for (types type : SimpleCompassUsersDatas.types.values())
+    for (types type : SimpleCompassUsersDatas.types.values()) {
       try {
         SimpleCompassUsersDatas.options.valueOf(config.getString("default_settings." + type));
       }
@@ -113,5 +142,34 @@ public class Main extends JavaPlugin {
         getLogger().warning(prepareMessage("errors.invalid_choice", ImmutableMap.of("type", "" + type)));
         config.set("default_settings." + type, config.getDefaults().getString("default_settings." + type));
       }
+
+      for (sections section : sections.values()) {
+        List<?>      list  = Main.config.getList("compass." + type + ".require." + section);
+        List<String> items = new ArrayList<String>();
+
+        if (list.size() == 0) continue;
+
+        if (list.contains("AIR")) {
+          config.set("compass." + type + ".require." + section, items);
+          continue;
+        }
+
+        for (Object item : list) {
+          try {
+            Material.valueOf((String) item);
+            items.add((String) item);
+          }
+          catch (Exception e) {}
+        }
+
+        if (list.size() > items.size()) {
+          getLogger().warning(prepareMessage("errors.invalid_items",
+              ImmutableMap.of("section", "" + section, "type", "" + type, "ignored",
+                  "" + (list.size() - items.size()))));
+
+          config.set("compass." + type + ".require." + section, items);
+        }
+      }
+    }
   }
 }

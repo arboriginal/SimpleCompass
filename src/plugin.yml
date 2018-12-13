@@ -1,6 +1,6 @@
 name: SimpleCompass
 description: Simple compass to help player who don't have sense of direction.
-version: 0.2
+version: 0.3
 
 author: arboriginal
 #website: https://www.spigotmc.org/resources/playerrider.62799/
@@ -33,6 +33,10 @@ permissions:
   scompass.use:
       description: Allows to use compass.
       default: true
+      
+  scompass.use.free: # Require scompass.use
+      description: Allows to use compass without consuming an item (if items are consumed).
+      default: false
       
   scompass.use.ACTIONBAR: # Require scompass.use
       description: Allows to use actionbar compass.

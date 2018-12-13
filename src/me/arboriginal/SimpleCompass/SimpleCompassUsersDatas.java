@@ -133,4 +133,26 @@ public class SimpleCompassUsersDatas {
 
     player.spigot().sendMessage(optionsComponent);
   }
+
+  String getCooldownKey(Player player, types type) {
+    return getKey(player, type + "_cooldown");
+  }
+
+  Long getConsumeCooldown(Player player, types type) {
+    String dataKey = getCooldownKey(player, type);
+
+    if (usersDatas.contains(dataKey)) {
+      Long cooldown = usersDatas.getLong(dataKey) - plugin.getCurrentTime();
+
+      if (cooldown > 0) return cooldown;
+    }
+
+    return 0L;
+  }
+
+  void setConsumeCooldown(Player player, types type) {
+    usersDatas.set(getCooldownKey(player, type),
+        plugin.getCurrentTime() + Main.config.getInt("compass." + type + ".require_settings.duration") * 1000);
+    saveUserDatas();
+  }
 }
