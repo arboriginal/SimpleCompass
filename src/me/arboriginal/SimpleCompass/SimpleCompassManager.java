@@ -1,5 +1,6 @@
 package me.arboriginal.SimpleCompass;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
@@ -281,7 +282,7 @@ public class SimpleCompassManager {
     String east    = Main.config.getString("compass." + type + ".cardinals.east");
     String south   = Main.config.getString("compass." + type + ".cardinals.south");
     String compass = sep + "♤" + sep + "♡" + sep + "♢" + sep + "♧";
-    char   face    = player.getFacing().toString().charAt(0);
+    char   face    = Arrays.asList('S', 'W', 'N', 'E').get(Math.round(player.getLocation().getYaw() / 90f) & 0x3);
     int    start   = (int) Math.round(rotation *
         (compass.length() - 4 + west.length() + north.length() + east.length() + south.length()) / 360);
 
