@@ -28,10 +28,10 @@ public class Main extends JavaPlugin {
 
   @Override
   public void onEnable() {
+    reloadConfig();
+
     udm = new SimpleCompassUsersDatas(this);
     scm = new SimpleCompassManager(this);
-
-    reloadConfig();
 
     getServer().getPluginManager().registerEvents(new SimpleCompassListener(this), this);
     getCommand("scompass-option").setExecutor(new SimpleCompassCommand(this));
