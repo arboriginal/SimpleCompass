@@ -86,7 +86,7 @@ public class SimpleCompassUsersDatas {
       usersDatas.save(datasFile);
     }
     catch (IOException e) {
-      plugin.getLogger().severe(plugin.prepareMessage("error.file_not_writable"));
+      plugin.getLogger().severe(plugin.prepareMessage("errors.file_not_writable"));
     }
   }
 
