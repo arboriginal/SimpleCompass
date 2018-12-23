@@ -14,7 +14,9 @@ All permissions are listed with a short description in this [plugin.yml](https:/
 
 ## Commands
 
-* **/scompass-reload** will reload the configuration
+* **/scompass** visual interface (clickable book)
 * **/scompass-option** will show the menu to choose where and when display the compass
+* **/sctrack** to tracker a position, coordinates or a player
+* **/scompass-reload** will reload the configuration
 
 You can use **/scompass-option** with arguments directly if you prefer (`/scompass-option <option> <type>`).

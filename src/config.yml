@@ -1,18 +1,8 @@
-# Those settings are applyed to players who have not use /scompass-option.
-#
-# Available values are:
-# - ALWAYS          The compass will always be visible
-# - ELYTRA          The compass will be visible only when gliding with elytras
-# - VEHICLE         The compass will be visible only when in a vehicle (horse, boat, ...)
-# - ELYTRA_VEHICLE  Combination of ELYTRA and VEHICLE
-# - DISABLED        The compass will not be displayed
-#
-default_settings:
-  ACTIONBAR: VEHICLE
-  BOSSBAR: ELYTRA
+# Choose lang file you want to use, actually, only en and fr exists, but you can set what you want...
+language: en # If this lang file doesn't exist, a new one is created (copy of english, so you can edit it).
 
 # You decide if your players can use both compass at the same time, or only one.
-# In this case, you have to use « DISABLED » in one of the « default_settings »'s type.
+# In this case, you have to use « DISABLED » in one of the type's default option.
 #
 # This will NOT disallow the use of the other one. It simply act like a switch:
 # If you activate ACTIONBAR, it will disable BOSSBAR.
@@ -20,129 +10,214 @@ default_settings:
 #
 # If you want to restrict the use to a single type of compass, you can do it with permissions.
 single_compass_mode: false
-# Time in milliseconds between 2 updates
-update_delay: 100 # Put 0 if you have predator's eyes
 
-# In all this configuration file, you can use colors with « & » followed with a number / letter:
-# from 0 (black) to r (reset). See this link: https://wiki.ess3.net/mc/
+interface:
+  give_book_on_fail: true # If true, if the book interface cannot be auto opened, give the book to the player
+  give_book_cooldown: 3600 # Time in seconds before a new book can be given to a player (if failed to open and give_book_on_fail=true)
+
+# Commands which can add an item to a player inventory, when used a check is done in case of a player now have required items.
+commands_trigger_refresh:
+- give
+
+# If this list is not empty, all lores listed make items having ont of them be ignored by compass item requirements
+ignored_lores: [] # « [] » represents an empty list, see below for an example of a filled list
+# ignored_lores: []
+# - This is not a compass item!
+# - YOU SHALL NOT PASS!!!
+
+# In compass strings, you can use colors with « § » followed with a number / letter:
+# from 0 (black) to r (reset). See this link: https://wiki.ess3.net/mc/ (and don't forget to adjust the symbol).
 
 compass:
-  # Settings for acionbar compass
   ACTIONBAR:
-    before: "§8--== [ "             # Compass: <before> <sep> W <sep> N <sep> E <sep> S <sep> <after>
-    separator_value: " ■ ■ ☗ ■ ■ "  # The separator (<sep>) can work with odd and even number of chars...
-    separator_color: "§7"           # Color of separators
-    inactive_color: "§1"            # Color of cardinals you're not facing
-    active_color: "§6§l"            # Color of the cardinal you"re facing
-    north_color: "§4"               # Color of the North (because it's always different on compasses...
-    active_north_color: "§4§l"      # Color of the Nothe if you are facing it.
-    after: " §8] ==--"
-    cardinals: # Those four cardinal points should be 1 char (will works otherwise but could be less precise)
-      north: "N"
-      east: "E"
-      west: "W"
-      south: "S"
-    # Required item to use this compass (thanks to Shano_dekono for the idea)
-    require:          # List of items can be empty « [] » or contains several items, in this case one of them is needed.
-      OFF_HAND: []    # Off hand is where you will wear your shield, ...
-      MAIN_HAND:      # See this list for available item names: https://hub.spigotmc.org/javadocs/spigot/org/bukkit/Material.html
-      - AIR           # AIR works like an empty list, here only to give you an example.
-      HOTBAR: []      # The 9 slots you see under your life and food levels
-      INVENTORY: []   # All items you have in the inventory (not in hotbar)
-    # This section is ignored of no item (nor AIR) is present in « require »
-    require_settings:
+    default: # Applyed to players who have not yet chosen their options.
+      mode: MODE360
+      # Available values:
+      # - MODE180         The compass will show cardinals / trackers in front of the player (180°)
+      # - MODE360         The compass will show all cardinals / trackers (360°)
+      option: VEHICLE
+      # Available values:
+      # - ALWAYS          The compass will always be visible
+      # - ELYTRA          The compass will be visible only when gliding with elytras
+      # - VEHICLE         The compass will be visible only when in a vehicle (horse, boat, ...)
+      # - ELYTRA_VEHICLE  Combination of ELYTRA and VEHICLE
+      # - DISABLED        The compass will not be displayed
+
+    require: # List of items can be empty « [] » or contains several items, in this case one of them is needed.
+      items: # See this list for available item names: https://hub.spigotmc.org/javadocs/spigot/org/bukkit/Material.html
+        OFF_HAND: []  # Off hand is where you will wear your shield, ...
+        MAIN_HAND:    # AIR works like an empty list, here only to give you an example.
+        - AIR         # (If one item is AIR, the full list will be ignored)
+        HOTBAR: []    # The 9 slots you see under your life and food levels
+        INVENTORY: [] # All items you have in the inventory (4 x 9 slots, not in hotbar)
+      # About required items:
+      # - If AIR is in the list, it will be considered as an empty list
+      # - If you fill several lists, the first one is checked, then the second if the player has not the first requirement, etc
+      #
+      # So, if you have:
+      #
+      # items:              It will result in:
+      #   OFF_HAND: []      1. Look for a dirt in main hand, found => display the compass, stop to search (*)
+      #   MAIN_HAND:        2. Look for a stick in main hand, found => display the compass, stop to search (*)
+      #   - DIRT            3. Look for a diamond in the inventory, found => display the compass, stop to search (*)
+      #   - STICK           4. Compass not displayed
+      #   HOTBAR:                                      /!\ As hotbar contains air, the plugin will not search in it.
+      #   - DIAMOND
+      #   - AIR             (*) Consume it if require_settings.consume is true
+      #   INVENTORY:
+      #   - DIAMOND
+
+      # The 2 next parameters are ignored if no item (nor AIR) is present in « items »
       consume: false  # if true, the required item will be consumed (the first one non AIR in the list, then the second if not found, etc)
       duration: 300   # When consumed, this is the cooldown (in seconds) not to re-consume another item.
-      # Players item are only consumed when the player moves, and the cooldown is not effective.
-      # So, for bossbar compass, it stays visible even if the player has consumed all necessary items he have until he move.
-      warnPlayerNoFuel: "&cYou no longer have the necessary items..." # Leave empty if you don't want to warn the player
+                      # Players item are only consumed when the player moves, and the cooldown is not effective.
+                      # So, for bossbar compass, it stays visible even if the player has consumed all necessary items he have until he move.
+    MODE180:
+      before: "§8--== [ "                         # Compass: <before> <sep> W <sep> N <sep> E <sep> S <sep> <after>
+      separator_value: " ◣ ◛ ◈ ◛ ◢ ☗ ◣ ◛ ◈ ◛ ◢ "  # The separator (<sep>) can work with odd and even number of chars...
+      separator_color: "§7"                       # Color of separators
+      inactive_color: "§1"                        # Color of cardinals you're not facing
+      active_color: "§6§l"                        # Color of the cardinal you"re facing
+      north_color: "§4"                           # Color of the North (because it's always different on compasses...
+      active_north_color: "§4§l"                  # Color of the Nothe if you are facing it.
+      after: " §8] ==--"
+      cardinals: # Those four cardinal points should have the same length for a better precision. If not, they will be filled with "filling_char".
+        north: "North"
+        east: "East"
+        west: "West"
+        south: "South"
+        filling_char: " " # If they don't have the same length, this character will be used to fill the short ones. Put an empty string to disable.
 
-  # Settings for bossbar compass
+    MODE360:                                      # See MODE180 for details, it works in the same way
+      before: "§8--== [ "
+      separator_value: " ■ ■ ☗ ■ ■ "
+      separator_color: "§7"
+      inactive_color: "§1"
+      active_color: "§6§l"
+      north_color: "§4"
+      active_north_color: "§4§l"
+      after: " §8] ==--"
+      cardinals:
+        north: "North"
+        east: "East"
+        west: "West"
+        south: "South"
+        filling_char: " "
+
+    # Specific to actionbar...
+    maintain_when_not_moving: false # If true, it will keep the actionbar compass when the player stop moving.
+    maintain_delay: 40 # Server ticks value, after this, the compass datas are re-send to the actionbar.
+
   BOSSBAR:
-    before: "§8[ "
-    separator_value: " ▴  ▲  ▴ "   # Look at ACTIONBAR for explanation, it's the same...
-    separator_color: "§7"
-    inactive_color: "§3"
-    active_color: "§e§l"
-    north_color: "§6"
-    active_north_color: "§6§l"
-    after: " §8]"
-    cardinals: # Those four cardinal points should be 1 char (will works otherwise but could be less precise)
-      north: "N"
-      east: "E"
-      west: "W"
-      south: "S"
-    require:                       # Look at ACTIONBAR for explanation, it's the same...
-      OFF_HAND: []
-      MAIN_HAND: []
-      HOTBAR: []
-      INVENTORY: []
-    require_settings:              # Look at ACTIONBAR for explanation, it's the same...
+    default:
+      mode: MODE180
+      option: ELYTRA
+    
+    require:
+      items:
+        OFF_HAND: []
+        MAIN_HAND: []
+        HOTBAR: []
+        INVENTORY: []
       consume: false
       duration: 300
-      warnPlayerNoFuel: "&cYou no longer have the necessary items..."
-      warnDuration: 5 # In seconds. Specific to bossbar, because ActionBar disappears itself after a short delay, not the bossbar...
+
+    MODE180:
+      before: "§8[ "
+      separator_value: "  ◇  ▴  ▲  ▴  ◇  "
+      separator_color: "§7"
+      inactive_color: "§3"
+      active_color: "§e§l"
+      north_color: "§6"
+      active_north_color: "§6§l"
+      after: " §8]"
+
+      cardinals:
+        north: "N"
+        east: "E"
+        west: "W"
+        south: "S"
+        filling_char: " "
+
+    MODE360:
+      before: "§8[ "
+      separator_value: " ▴  ▲  ▴ "
+      separator_color: "§7"
+      inactive_color: "§3"
+      active_color: "§e§l"
+      north_color: "§6"
+      active_north_color: "§6§l"
+      after: " §8]"
+
+      cardinals:
+        north: "N"
+        east: "E"
+        west: "W"
+        south: "S"
+        filling_char: " "
+
     # Specific to bossbar...    /!\ it could take a few more than given seconds if your server is lagging (20 ticks = 1 second if no lags)
+    disappear_when_not_moving: false # If true, it will hide the bossbar compass when the player stop moving after "disappear_delay" delay.
+    disappear_delay: 50 # Server ticks value, 50 corresponds about to the same as actionbar delay (20 ticks = 1 second when no lags).
+    warnPlayerNoMoreFuel: 3 # (in seconds.) When the player has no more the required items, time the warn message will stay visible
+
     attributes:
-      color: YELLOW # available values: https://hub.spigotmc.org/javadocs/spigot/org/bukkit/boss/BarColor.html  (or error invalid_bossbar_color)
+      color: GREEN  # available values: https://hub.spigotmc.org/javadocs/spigot/org/bukkit/boss/BarColor.html  (or error invalid_bossbar_color)
       style: SOLID  # available values: https://hub.spigotmc.org/javadocs/spigot/org/bukkit/boss/BarStyle.html  (or error invalid_bossbar_style)
+      progress: 0.0 # Value between 0 and 1 for the bossbar progress level.
 
-# About required items:
-# - If AIR is in the list, it will be considered as an empty list
-# - If you fill several lists, the first one is checked, then the second if the player has not the first requirement, etc
-#
-# So, if you have:
-# require:                    It will result in:
-#   OFF_HAND: []
-#   MAIN_HAND:                  1. Look for a dirt in main hand, found => display the compass, stop to search (*)
-#   - DIRT                      2. Look for a stick in main hand, found => display the compass, stop to search (*)
-#   - STICK                     3. Look for a diamond in the inventory, found => display the compass, stop to search (*)
-#   HOTBAR:                     4. Compass not displayed
-#   - DIAMOND
-#   - AIR                      (*) Consume it if require_settings.consume is true
-#   INVENTORY:                 /!\ As hotbar contains air, the plugin will not search in it.
-#   - DIAMOND
+      # You can use the elytra durability has progress length...
+      elytra_durability:
+        wearing: true # /!\ Will not force the display, only consider durability in bossbar progress, so you need ALWAYS (for example).
+        gliding: true # Only applied when gliding with elytra, display the durability in bossbar progress length.
+        levels:       # Use a different color for those given levels of durability (percentage)
+          50: YELLOW
+          20: RED
 
-# Prefix used in all text messages (and errors), can be an empty string to disable it globally...
-prefix: "&8[&eSimpleCompass&8] "  # But you can also decide to remove the {prefix} part in specific messages.
+# Options relative to the track command...
+tracker_settings:
+  priority: # Order in which trackers will be displayed
+  - PLAYER
+  - COORDS
+  - POSITION
 
-# BEWARE: When you see « {word} », this is a placeholder! So you have to let it like that (not translated, not customised),
-# Otherwise, the plugin will not be able to substitute the dynamic value it represents.
+  request_duration: 120 # Duration in seconds while a player tracking request stays valid.
 
-messages:
-  configuration_reloaded: "{prefix}&aConfiguration successfully reloaded" # When using /scompass-reload
-  options: # Human name for the options displayed whith /scompass-option without arguments (clickable)
-    ALWAYS: "Always"
-    ELYTRA: "Elytra"
-    VEHICLE: "In vehicle"
-    ELYTRA_VEHICLE: "Elytra + vehicle"
-    DISABLED: "Off"
-  types: # Human name compass' types, displayed when using /scompass-option without arguments
-    ACTIONBAR: "Action bar"
-    BOSSBAR: "Boss bar"
-  status: # You can customize the status of player's options here
-    options_header: "{prefix}&8--------------------------------------" # First row
-    option_title: "&f ⚙ Compass for &c&l{type}&f:"                     # Name of the compass type
-    option_on: " &7[&a&l{option}&7]"                                   # Enabled option
-    option_off: " &7[&3{option}&7]"                                    # Disabled option
-    option_hover: "&6Click to choose &a&l{option}&6\n&6for &c&l{type}" # Hover text on options
-    options_separator: "&8."                                           # Line between type's options
-    options_footer: "&8------------------- &7(click an option to edit your choice)&8 --" # Last row
-  settings_saved: | # Here is the message displayed when the user click on an option to change his settings
-    &8.
-    &8.
-    {prefix}&aYour new settings have been saved.
-    &8.
-    &8.
+  actions: # You can define your own action names here (choose something short and understandable by your players)
+    ADD: add
+    ASK: ask
+    DEL: del
+    START: start
+    STOP: stop
 
-errors:
-  command_only_for_players: "{prefix}&cThis command can only be executed by a player!"   # /scompass-option cannot be executed in the console... Sorry.
-  invalid_bossbar_color: "{prefix}&cInvalid bossbar color, using default"                # If you did a mistake in the bossbar color configuration
-  invalid_bossbar_style: "{prefix}&cInvalid bossbar style, using default"                # If you did a mistake in the bossbar style configuration
-  invalid_choice: "{prefix}&cInvalid default choice for {type}, using default"           # See « default_settings » ...
-  file_not_writable: "{prefix}&cUnable to write the users' datas file..."                # Cannot create or write into plugins/SimpleCompass/usersDatas.yml
-  wrong_usage: "{prefix}&cWrong usage of the command!"                                   # ...
-  invalid_option: "{prefix}&6{option} &cis an invalid compass option!"                   # In case of players tries to type strange options
-  invalid_type: "{prefix}&6{type} &cis an invalid compass type!"                         # Same for compass types
-  missing_type: "{prefix}&6You must specify on which type you want to set this option!"  # When the command is used in a short form but when ambigous...
-  invalid_items: "{prefix}&cFound invalid items in {section} ({type}) requirement list, &6&l{ignored}&c has been ignored..." # Mistake in config compass type "require"
+  trackers:
+    COORDS:
+      name: coords  # You can define your own tracker names here (choose something short and understandable by your players)
+      temp: "ϼ"     # Advanced: Symbol temporary used by the plugin, must be unique, 1 char and not used in "symbol".
+      symbol: "§e☉" # Symbol displayed on the compass for this king of trackers.
+
+    PLAYER:
+      name: player
+      temp: "♃"
+      symbol: "§a§l♙"
+
+    POSITION:
+      name: position
+      temp: "⚭"
+      symbol: "§c☤"
+
+# Defined positions for players with "scompass.track.defined" permission
+positions: # DO NOT use a name you have defined in trackers_settings.trackers
+  spawn: { x: 0, z: 0}
+  # random: { x: 1000, z: 1000}    <--- an example on how to add another defined position
+# Those positions can be managed in game with permission "scompass.track.POSITION.manage"
+
+# Advanced... Delays / cache durations (FYI: 20 ticks = 1 second if your server doesn't lag)
+delays:
+  elytra_durability: 5; # (seconds)  Elytra durability calculation (if used in bossbar progress).
+  refresh_status: 20    # (ticks)    Refresh compass status after specific actions (enter vehicle, using elytra, ...).
+  option_take_effec: 20 # (ticks)    Time to wait before a new open takes effect in the currently active player compasses.   
+  update_compass: 100   # (millisec) Compass datas refresh on player move, put 0 if you have predator's eyes
+  fix_uuid: 50          # (ticks)    Time (after login) before to fix UUID which can happens, especialy in offline mode.
+  # If compasses not appearing after (re)login, try a higher value. You can verify it's related by using /scompass-reload.
+  # If after running this command, the compasses re-appear, the cause is a wrong player UUID discovery.

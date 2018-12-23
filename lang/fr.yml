@@ -1,0 +1,223 @@
+# Dans tous les messages, tu peux utiliser les couleurs avec « & » suivi d'un chiffre / lettre :
+# de 0 (noir) à r (reset). Voir ce lien : https://wiki.ess3.net/mc/
+# (Tu peux également utiliser la notation classique avec le symbole « § » à la place de « & ».)
+
+# Préfixe qui peut être utilisé dans tous les messages, peut être une chaine vide pour le désactiver globalement...
+prefix: "&8[&eSimpleCompass&8] "  # Mais tu peux aussi le décider de retirer la partie {prefix} dans des messages spécifiques.
+
+# ATTENTION : Quand tu vois « {word} », c'est un masque de remplacement ! Donc tu dois le laisser tel quel (non traduit, non personnalisé),
+# Sinon, le plugin ne sera pas capable de substituer la value dynamique qu'il représente.
+
+# Message affiché quand la commande reload est utilisée
+configuration_reloaded: "{prefix}&aConfiguration rechargée"
+
+# Choix invalide dans le fichier de config pour les réglages par défaut des boussoles.
+invalid_choice: "{prefix}&cChoix par défaut invalide pour {type} ({key}), utilisation de ceux par défaut"
+# Si tu as fait une erreur dans la configuration de la couleur de la barre de boss
+invalid_bossbar_color: "{prefix}&cCouleur de barre de boss invalide, utilisation de celle par défaut"
+# Si tu as fait une erreur dans la configuration du style de la barre de boss
+invalid_bossbar_style: "{prefix}&cStyle de barre de boss invalide, utilisation de celui par défaut"
+# Si tu as fait une erreur dans la configuration de la couleur de la barre de boss
+invalid_bossbar_color_level: "{prefix}&cCouleur de barre de boss invalide dans les niveaux liés aux élytres."
+# Erreur dans le fichier de config pour les prérequis d'une boussole 
+invalid_items: "{prefix}&cItems invalides trouvés dans les prérequis de {section} ({type}), &6&l{ignored}&c ont été ignorés..."
+# Erreur dans le fichier de config pour "tracker_settings"
+invalid_names: "{prefix}&cNoms invalides trouvés dans tracker_settings, modifié : {modified}."
+# Message d'information pour les points cardinaux s'ils n'ont pas la même longueur, voir "filling_char" pour plus de détails
+cardinal_length: "{prefix}&eTon point cardinal {cardinal} ({key}) a été ajusté pour correspondre à la longueur des autres"
+# Si tu as fait une erreur dans la liste de priorité des trackers
+invalid_priorities: "{prefix}&cLa priorité des trackers contient une erreur, utilisation de celle par défaut..."
+# Impossible de créer ou d'écrire dans plugins/SimpleCompass/usersDatas.yml
+file_not_writable: "{prefix}&cImpossible d'écrire dans le fichier des données utilisateur..."
+
+# Quand une commande qui ne peut être exécutée que par un joueur est utilisée depuis la console
+command_only_for_players: "{prefix}&cCette commande ne peut être utilisée que par un joueur !"
+# Commande désactivée (par une permission) pour un joueur.
+command_no_access: "{prefix}&cTu n'as pas accès à cette commande !"
+# Quand un joueur utilise une commande avec de mauvais arguments
+wrong_usage: "{prefix}&cMauvais utilisation de la commande !"
+# Quand un joueur utilise des options invalides
+invalid_option: "{prefix}&6{option} &cest une option invalide !"
+# Quand un joueur utilise des types invalides
+invalid_type: "{prefix}&6{type} &cest un type invalide !"
+# Quand une commande est utilisée dans sa forme compacte mais est ambigue...
+missing_type: "{prefix}&6Tu dois préciser sur quel type appliquer cette option !"
+# Cible déjà existante
+target_exists: "{prefix}&e{target} &cexiste déjà."
+# Cible inconnue pour la requête
+target_not_found: "{prefix}&e{target} &cest introuvable !"
+# Quand un joueur tente d'accepter / refuser une requête expirée
+request_expired: "{prefix}&cPas de requête en cours pour &e{player}&c."
+
+# Affiché dans les boussoles quand le joueur n'a plus les items nécessaires pour l'utiliser
+warnPlayerNoMoreFuel: "&cTu n'as plus les items requis..."
+# Au cas où l'interface sous forme de livre ne peut être ouverte automatiquement
+interface_failed_auto_open: "{prefix}&eL'interface ne peut être ouverte automatiquement..."
+# Au cas où l'interface sous forme de livre ne peut être ouverte automatiquement et que le livre a été donné au joueur
+interface_failed_auto_open_give: "{prefix}&eL'interface ne peut être ouverte automatiquement... &lLe livre a été ajouté à ton inventaire."
+# Au cas où l'interface sous forme de livre ne peut être ouverte automatiquement et que le livre n'a pu être donné car inventaire plein
+interface_failed_auto_open_give_failed: "{prefix}&eL'interface ne peut être ouverte automatiquement... Et &c&ltu n'as pas la place pour recevoir le livre..."
+# Au cas où l'interface sous forme de livre ne peut être ouverte automatiquement et que le livre n'a pu être donné car le joueur doit attendre
+interface_book_give_cooldown: "{prefix}&cTu fois attendre {delay} secondes avant qu'un autre livre-interface soit disponible !"
+
+# Noms des types de boussoles
+types:
+  ACTIONBAR: "Barre d'action"
+  BOSSBAR: "Barre de boss"
+
+# Noms des modes de boussoles 
+modes:
+  MODE180: "180°"
+  MODE360: "360°"
+
+# Noms des options de boussoles
+options:
+  ALWAYS: "Toujours"
+  ELYTRA: "Elytres"
+  VEHICLE: "Véhicule"
+  ELYTRA_VEHICLE: "Elytres + véhicule"
+  DISABLED: "Non"
+
+commands:
+  scompass:
+    header: |-
+      ------------------
+         &9&lSimpleCompass&8
+    content: |-
+      ------------------
+
+         &0&l{type}&r:
+
+          {MODE180} {MODE360}
+    footer: |-
+      &f . . . . . . . .
+    options:
+      active: " &8[&2&l{option}&8]"
+      inactive: " &7[&c{option}&7]"
+      hover: "&6Clique pour choisir &a&l{option}&6\n&6pour &c&l{type}"
+    saved: "{prefix}&aTes réglages ont été sauvegardés."
+
+  scoption:
+    header: |-
+      {prefix}&8--------------------------------------
+    content: |-
+      &8.
+      &f ⚙ Boussoles dans la &c&l{type}&f: {MODE180} {MODE360}
+    footer: |-
+      &8.
+      &8------------------- &7(clique sur une option pour modifier)&8 --
+    options:
+      active: " &7[&a&l{option}&7]"
+      inactive: " &7[&3{option}&7]"
+      hover: "&6Clique pour choisir &a&l{option}&6\n&6pour &c&l{type}"
+    saved: |
+      &8.
+      &8.
+      {prefix}&aTes réglages ont été sauvegardés.
+      &8.
+      &8.
+
+  sctrack:
+    COORDS:
+      list: "{prefix}&rCoordonnées nommées : {list}."
+      list_empty: "{prefix}&rAucunes coordonnées nommées."
+
+      ADD: "{prefix}&aLes coordonnées &e{target}&a ont été créées."
+      DEL: "{prefix}&aLes coordonnées &e{target}&a ont été supprimée."
+      START: "{prefix}&6Tu pistes maintenant les coordonnées &e{target}&6."
+      STOP: "{prefix}&6Tu ne pistes plus les coordonnées &e{target}&6."
+
+    PLAYER:
+      list: "{prefix}&rJoueurs pistés : {list}."
+      list_empty: "{prefix}&rAucun joueur pisté."
+
+      ASK: "{prefix}&rDemande pistage envoyée à {target}."
+      START: "{prefix}&6Tu pistes maintenant &e{target}&6."
+      STOP: "{prefix}&6Tu ne pistes plus &e{target}&6."
+
+      request:
+        message: |
+          {prefix}&8--------------------------------------
+          &8|
+          &8|                 &e{player} &7veut te pister.
+          &8|
+          &8|                   &8[ {deny} &8] &f/&8 [ {accept} &8] &f?
+          &8|
+          &8----------------------------------------------------
+        accept: "&a&lACCEPTER"
+        accept_hover: |
+          Clique pour &e&laccepter
+          &7 -- ou tape --
+          &c/sctaccept {player}
+        deny: "&c&lREFUSER"
+        deny_hover: |
+          Clique pour &e&lrefuser
+          &7 -- ou tape --
+          &c/sctdeny {player}
+        accepted:
+          player: "{prefix}&e{target}&r a &aaccepté&r ta demande."
+          target: "{prefix}&e{player}&r te pistes à présent..."
+        refused:
+          player: "{prefix}&e{target}&r a &crefusé&r ta requête."
+          target: "{prefix}&e{player}&r ne te pistes plus."
+
+    POSITION:
+      list: "{prefix}&rPositions nommées : {list}."
+      list_empty: "{prefix}&rAucune position nommée."
+
+      ADD: "{prefix}&aLa position &e{target}&a a été créée."
+      DEL: "{prefix}&aLa position &e{target}&a a été supprimée."
+      START: "{prefix}&6Tu pistes maintenant la position &e{target}&6."
+      STOP: "{prefix}&6Tu ne pistes plus la position &e{target}&6."
+
+    help: # Voir tracker_settings pour les valeurs de substitution
+      header: "&e|  {prefix} &a&lAide"
+      separator: "&e-----------------------------------------------------"
+
+      COORDS:
+        noargs: |
+          &r- &c/sctrack &e{COORDS}
+          &7  Affiche la liste des coordonnées nommées.
+        ADD: |
+          &r- &c/sctrack &e{COORDS} &6{ADD} &3<nom> &b<x> <z>
+          &7  Crée une coordonnée nommée.
+        DEL: |
+          &r- &c/sctrack &e{COORDS} &6{DEL} &3<nom>
+          &7  Supprime une coordonnée nommée.
+        START: |
+          &r- &c/sctrack &e{COORDS} &6{START} &3<nom>
+          &7  Démarre le pistage d'une coordonnée nommée.
+        STOP: |
+          &r- &c/sctrack &e{COORDS} &6{STOP} &3<nom>
+          &7  Arrête le pistage d'une coordonnée nommée.
+
+      PLAYER:
+        noargs: |
+          &r- &c/sctrack &e{PLAYER}
+          &7  Affiche la liste des joueurs que tu pistes.
+        ASK: |
+          &r- &c/sctrack &e{PLAYER} &6{ASK} &3<nom>
+          &7  Demande à un joueur de le pister.
+        START: |
+          &r- &c/sctrack &e{PLAYER} &6{START} &3<nom>
+          &7  Démarre le pistage d'un joueur (sans demande).
+        STOP: |
+          &r- &c/sctrack &e{PLAYER} &6{STOP} &3<nom>
+          &7  Arrête le pistage d'un joueur.
+
+      POSITION:
+        noargs: |
+          &r- &c/sctrack &e{POSITION}
+          &7  Affiche la liste des positions nommées.
+        ADD: |
+          &r- &c/sctrack &e{POSITION} &6{ADD} &3<nom> &b<x> <z>
+          &7  Crée une position nommée.
+        DEL: |
+          &r- &c/sctrack &e{POSITION} &6{DEL} &3<nom>
+          &7  Supprime une position nommée.
+        START: |
+          &r- &c/sctrack &e{POSITION} &6{START} &3<nom>
+          &7  Démarre le pistage d'une position nommée.
+        STOP: |
+          &r- &c/sctrack &e{POSITION} &6{STOP} &3<nom>
+          &7  Arrête le pistage d'une position nommée.

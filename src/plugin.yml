@@ -1,6 +1,6 @@
 name: SimpleCompass
 description: Simple compass to help player who don't have sense of direction.
-version: 0.4
+version: 0.5
 
 author: arboriginal
 website: https://www.spigotmc.org/resources/simplecompass.63140/
@@ -12,56 +12,183 @@ softdepend: [ ]
 api-version: 1.13
 database: false
 
-main: me.arboriginal.SimpleCompass.Main
+main: me.arboriginal.SimpleCompass.plugin.SimpleCompass
 
 commands:
+  scompass:
+    description: Use the SimpleCompass interface
+    permission: scompass.interface
+
   scompass-reload:
     description: Reload SimpleCompass configuration
     permission: scompass.reload
+    aliases: screload
 
   scompass-option:
     description: Choose personal options for SimpleCompass
-    permission: scompass.use
+    permission: scompass.option
     # Also require scompass.use.ACTIONBAR or scompass.use.BOSSBAR or both, and at least an option
     usage: /<command> [<[option] [type]>]
+    aliases: scoption
+
+  scompass-track:
+    description: Manage SimpleCompass trackers
+    permission: scompass.track
+    # Also require scompass.use.ACTIONBAR or scompass.use.BOSSBAR or both, and at least an option
+    usage: /<command> <tracker> <action> <target> [<x> <z>]
+    aliases: sctrack
+
+  scompass-track-accept:
+    description: Accept a tracking request
+    permission: scompass.track.accept
+    usage: /<command> <player>
+    aliases: sctaccept
+
+  scompass-track-deny:
+    description: Deny a tracking request
+    permission: scompass.track.accept
+    usage: /<command> <player>
+    aliases: sctdeny
 
 permissions:
   scompass.reload:
-      description: Allows to reload the configuration.
-      default: op
+    description: Allows to reload the configuration.
+    default: op
 
-  scompass.use:
-      description: Allows to use compass.
-      default: true
+  scompass.use: # This is the "main" permission, without this one, others have no effect (except scompass.reload).
+    description: Allows to use compass.
+    default: true
 
-  scompass.use.free: # Require scompass.use
-      description: Allows to use compass without consuming an item (if items are consumed).
-      default: false
+  scompass.*:
+    description: Grants all permissions for this plugin.
+    default: op
+    children:
+      scompass.interface: true
+      scompass.reload: true
+      scompass.help: true
+      scompass.use: true
+      scompass.use.*: true
+      scompass.use.free: true
+      scompass.option: true
+      scompass.option.*: true
+      scompass.track.*: true
+
+  scompass.interface: # Require scompass.use
+    description: Allows the use of scompass command
+    default: true
+
+  scompass.help:
+    description: Allows to display the command help.
+    default: true
+
+  scompass.use.*:
+    description: Allows to use all compass types.
+    default: false
+    children:
+      scompass.use: true
+      scompass.use.ACTIONBAR: true
+      scompass.use.BOSSBAR: true
 
   scompass.use.ACTIONBAR: # Require scompass.use
-      description: Allows to use actionbar compass.
-      default: true
+    description: Allows to use actionbar compass.
+    default: true
 
   scompass.use.BOSSBAR: # Require scompass.use
-      description: Allows to use bossbar compass.
-      default: true
+    description: Allows to use bossbar compass.
+    default: true
 
-  scompass.option.ALWAYS:
-      description: Allows to use the option "Always activated".
-      default: true
+  scompass.use.free: # Require scompass.use
+    description: Allows to use compass without consuming an item (if items are consumed).
+    default: false
 
-  scompass.option.ELYTRA:
-      description: Allows to use the option "Only activated when using elytra".
-      default: true
+  scompass.option.*: # Require scompass.use
+    description: Allows to use all the options.
+    default: op
+    children:
+      scompass.option: true
+      scompass.option.ALWAYS: true
+      scompass.option.ELYTRA: true
+      scompass.option.ELYTRA_VEHICLE: true
+      scompass.option.VEHICLE: true
+      scompass.option.DISABLED: true
 
-  scompass.option.ELYTRA_VEHICLE:
-      description: Allows to use the option "Only activated when using elytra or when a vehicle".
-      default: true
+  scompass.option: # Require scompass.use
+    description: Allows the use of scompass-option commande. Require scompass.use
+    default: true
 
-  scompass.option.VEHICLE:
-      description: Allows to use the option "Only activated when on a vehicle".
-      default: true
+  scompass.option.ALWAYS: # Require scompass.use
+    description: Allows to use the option "Always activated".
+    default: true
 
-  scompass.option.DISABLED:
-      description: Allows to use the option "Disabled".
-      default: true
+  scompass.option.ELYTRA: # Require scompass.use
+    description: Allows to use the option "Only activated when using elytra".
+    default: true
+
+  scompass.option.ELYTRA_VEHICLE: # Require scompass.use
+    description: Allows to use the option "Only activated when using elytra or when a vehicle".
+    default: true
+
+  scompass.option.VEHICLE: # Require scompass.use
+    description: Allows to use the option "Only activated when on a vehicle".
+    default: true
+
+  scompass.option.DISABLED: # Require scompass.use
+    description: Allows to use the option "Disabled".
+    default: true
+
+  scompass.track.*: # Require scompass.use
+    description: Allows to use all the trackers.
+    default: op
+    children:
+      scompass.track: true
+      scompass.track.accept: true
+      scompass.track.COORDS: true
+      scompass.track.PLAYER.*: true
+      scompass.track.POSITION.*: true
+
+  scompass.track: # Require scompass.use
+    description: Allows the use of scompass-track command.
+    default: false
+
+  scompass.track.accept:
+    description: Allows to accept tracking request.
+    default: true
+
+  scompass.track.COORDS: # Require scompass.track
+    description: Allows to use the tracker with given coords.
+    default: false
+
+  scompass.track.PLAYER.*: # Require scompass.track
+    description: Allows to use the tracker on players.
+    default: op
+    children:
+      scompass.track.PLAYER: true
+      scompass.track.PLAYER.request: true
+      scompass.track.PLAYER.silently: true
+
+  scompass.track.PLAYER: # Require scompass.track
+    description: Allows to use the tracker on players.
+    default: false
+
+  scompass.track.PLAYER.request: # Require scompass.track.player
+    description: Allows to use the tracker on players, with their agreement.
+    default: true
+
+  scompass.track.PLAYER.silently: # Require scompass.track.player
+    description: Allows to use the tracker on players, without asking.
+    default: true
+
+  scompass.track.POSITION.*: # Require scompass.track
+    description: Allows to use the tracker with defined positions and manage them.
+    default: op
+    children:
+      scompass.track.POSITION: true
+      scompass.track.POSITION.manage: true
+
+  scompass.track.POSITION: # Require scompass.track
+    description: Allows to use the tracker with defined positions.
+    default: true
+
+  scompass.track.POSITION.manage: # Require scompass.track
+    description: Allows to manage defined positions.
+    default: false

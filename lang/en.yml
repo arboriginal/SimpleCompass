@@ -1,0 +1,223 @@
+# In all messages, you can use colors with « & » followed by a number / letter:
+# from 0 (black) to r (reset). See this link: https://wiki.ess3.net/mc/
+# (You can still use the classic notation with « § » symbol instead of « & ».)
+
+# Prefix which can be used in all messages, can be an empty string to disable it globally...
+prefix: "&8[&eSimpleCompass&8] "  # But you can also decide to remove the {prefix} part in specific messages.
+
+# BEWARE: When you see « {word} », this is a placeholder! So you have to let it like that (not translated, not customised),
+# Otherwise, the plugin will not be able to substitute the dynamic value it represents.
+
+# Message displayed when using the reload command
+configuration_reloaded: "{prefix}&aConfiguration successfully reloaded"
+
+# Invalid choice in the config file for compasses default settings.
+invalid_choice: "{prefix}&cInvalid default choice for {type} ({key}), using default"
+# If you did a mistake in the bossbar color configuration
+invalid_bossbar_color: "{prefix}&cInvalid bossbar color, using default"
+# If you did a mistake in the bossbar style configuration
+invalid_bossbar_style: "{prefix}&cInvalid bossbar style, using default"
+# If you did a mistake in the bossbar color levels based on elytra durability
+invalid_bossbar_color_level: "{prefix}&cInvalid bossbar color found in elytra levels."
+# Mistake in config file for compass requirements
+invalid_items: "{prefix}&cFound invalid items in {section} ({type}) requirement list, &6&l{ignored}&c has been ignored..."
+# Mistake in config file for "tracker_settings"
+invalid_names: "{prefix}&cFound invalid names in tracker_settings, modified: {modified}."
+# Information message for cardinals if they have not same length, see "filling_char" for more details
+cardinal_length: "{prefix}&eYour cardinal {cardinal} ({key}) has been adjusted to fit the max length of others"
+# If you commit an error in trackers priorities list
+invalid_priorities: "{prefix}&cTrackers priority contains error, using default..."
+# Cannot create or write into plugins/SimpleCompass/usersDatas.yml
+file_not_writable: "{prefix}&cUnable to write the users' datas file..."
+
+# When trying to execute a command in console which only works for players
+command_only_for_players: "{prefix}&cThis command can only be executed by a player!"
+# Command disabled (by permission) for a player.
+command_no_access: "{prefix}&cYou don't have access to this command!"
+# When a player use a command with wrong arguments
+wrong_usage: "{prefix}&cWrong usage of the command!"
+# When a player uses invalid options
+invalid_option: "{prefix}&6{option} &cis an invalid compass option!"
+# When a player uses invalid types
+invalid_type: "{prefix}&6{type} &cis an invalid compass type!"
+# When the command is used in a short form but when ambigous...
+missing_type: "{prefix}&6You must specify on which type you want to set this option!"
+# Target already exists
+target_exists: "{prefix}&e{target} &calready exists."
+# Unknown target for request
+target_not_found: "{prefix}&e{target} &ccannot be found!"
+# When a player try to accept / deny an expired request
+request_expired: "{prefix}&cNo pending request from &e{player}&c."
+
+# Displayed in compasses when the player no more have required items to use the compass
+warnPlayerNoMoreFuel: "&cYou no longer have the necessary items..."
+# In case of the book interface cannot be opened automaticaly
+interface_failed_auto_open: "{prefix}&eInterface book cannot be auto-opened..."
+# In case of the book interface cannot be opened automaticaly and the book has been given to the player
+interface_failed_auto_open_give: "{prefix}&eInterface book cannot be auto-opened... &lBook has been added to your inventory."
+# In case of the book interface cannot be opened automaticaly and the book cannot be given to the player because of a full inventory
+interface_failed_auto_open_give_failed: "{prefix}&eInterface book cannot be auto-opened... And &c&lyou have no free slot to receive the book..."
+# In case of the book interface cannot be opened automaticaly and the book cannot be given to the player because of the cooldown
+interface_book_give_cooldown: "{prefix}&cYou have to wait {delay} seconds before another book interface will be available!"
+
+# Human name for the compass types
+types:
+  ACTIONBAR: "Action bar"
+  BOSSBAR: "Boss bar"
+
+# Human name for the compass modes
+modes:
+  MODE180: "180°"
+  MODE360: "360°"
+
+# Human name for the compass options
+options:
+  ALWAYS: "Always"
+  ELYTRA: "Elytra"
+  VEHICLE: "In vehicle"
+  ELYTRA_VEHICLE: "Elytra + vehicle"
+  DISABLED: "Off"
+
+commands:
+  scompass:
+    header: |-
+      ------------------
+         &9&lSimpleCompass&8
+    content: |-
+      ------------------
+
+           &0&l{type}&r:
+
+          {MODE180} {MODE360}
+    footer: |-
+      &f . . . . . . . .
+    options:
+      active: " &8[&2&l{option}&8]"
+      inactive: " &7[&c{option}&7]"
+      hover: "&6Click to choose &a&l{option}&6\n&6for &c&l{type}"
+    saved: "{prefix}&aYour new settings have been saved."
+
+  scoption:
+    header: |-
+      {prefix}&8--------------------------------------
+    content: |-
+      &8.
+      &f ⚙ Compass for &c&l{type}&f: {MODE180} {MODE360}
+    footer: |-
+      &8.
+      &8------------------- &7(click an option to edit your choice)&8 --
+    options:
+      active: " &7[&a&l{option}&7]"
+      inactive: " &7[&3{option}&7]"
+      hover: "&6Click to choose &a&l{option}&6\n&6for &c&l{type}"
+    saved: |
+      &8.
+      &8.
+      {prefix}&aYour new settings have been saved.
+      &8.
+      &8.
+
+  sctrack:
+    COORDS:
+      list: "{prefix}&rNamed coordinates: {list}."
+      list_empty: "{prefix}&rNo named coordinates."
+
+      ADD: "{prefix}&aNamed coordinate &e{target}&a has been created."
+      DEL: "{prefix}&aNamed coordinate &e{target}&a has been deleted."
+      START: "{prefix}&6You are now tracking &e{target}&6 coordinate."
+      STOP: "{prefix}&6You no longer track &e{target}&6 coorditate."
+
+    PLAYER:
+      list: "{prefix}&rTracked players: {list}."
+      list_empty: "{prefix}&rNo player tracked."
+
+      ASK: "{prefix}&rTracking request sent to {target}."
+      START: "{prefix}&6You are now tracking &e{target}&6."
+      STOP: "{prefix}&6You no longer track &e{target}&6."
+
+      request:
+        message: |
+          {prefix}&8--------------------------------------
+          &8|
+          &8|                 &e{player} &7want to track you.
+          &8|
+          &8|                   &8[ {deny} &8] &f/&8 [ {accept} &8] &f?
+          &8|
+          &8----------------------------------------------------
+        accept: "&a&lACCEPT"
+        accept_hover: |
+          Click to &e&laccept
+          &7 -- or type --
+          &c/sctaccept {player}
+        deny: "&c&lDENY"
+        deny_hover: |
+          Click to &e&ldeny
+          &7 -- or type --
+          &c/sctdeny {player}
+        accepted:
+          player: "{prefix}&e{target}&r has &aaccepted&r your request."
+          target: "{prefix}&e{player}&r is now tracking you..."
+        refused:
+          player: "{prefix}&e{target}&r has &crefused&r your request."
+          target: "{prefix}&e{player}&r will not track you."
+
+    POSITION:
+      list: "{prefix}&rNamed positions: {list}."
+      list_empty: "{prefix}&rNo named positions."
+
+      ADD: "{prefix}&aNamed position &e{target}&a has been created."
+      DEL: "{prefix}&aNamed position &e{target}&a has been deleted."
+      START: "{prefix}&6You are now tracking &e{target}&6 position."
+      STOP: "{prefix}&6You no longer track &e{target}&6 position."
+
+    help: # See tracker_settings for values substitutions
+      header: "&e|  {prefix} &a&lHelp"
+      separator: "&e-----------------------------------------------------"
+
+      COORDS:
+        noargs: |
+          &r- &c/sctrack &e{COORDS}
+          &7  Show the list of your named coordinates.
+        ADD: |
+          &r- &c/sctrack &e{COORDS} &6{ADD} &3<name> &b<x> <z>
+          &7  Add a new named coordinate.
+        DEL: |
+          &r- &c/sctrack &e{COORDS} &6{DEL} &3<name>
+          &7  Delete a named coordinate.
+        START: |
+          &r- &c/sctrack &e{COORDS} &6{START} &3<name>
+          &7  Begin the tracking of this named coordinate.
+        STOP: |
+          &r- &c/sctrack &e{COORDS} &6{STOP} &3<name>
+          &7  End the tracking of this named coordinate.
+
+      PLAYER:
+        noargs: |
+          &r- &c/sctrack &e{PLAYER}
+          &7  Show list of players you are currently tracking.
+        ASK: |
+          &r- &c/sctrack &e{PLAYER} &6{ASK} &3<name>
+          &7  Ask to a player to track his position.
+        START: |
+          &r- &c/sctrack &e{PLAYER} &6{START} &3<name>
+          &7  Begin the tracking of this player (without asking).
+        STOP: |
+          &r- &c/sctrack &e{PLAYER} &6{STOP} &3<name>
+          &7  End the tracking of this player.
+
+      POSITION:
+        noargs: |
+          &r- &c/sctrack &e{POSITION}
+          &7  Show list of trackable positions.
+        ADD: |
+          &r- &c/sctrack &e{POSITION} &6{ADD} &3<name> &b<x> <z>
+          &7  Create a new trackable position.
+        DEL: |
+          &r- &c/sctrack &e{POSITION} &6{DEL} &3<name>
+          &7  Remove this trackable position.
+        START: |
+          &r- &c/sctrack &e{POSITION} &6{START} &3<name>
+          &7  Begin the tracking of this named position.
+        STOP: |
+          &r- &c/sctrack &e{POSITION} &6{STOP} &3<name>
+          &7  End the tracking of this named position.
