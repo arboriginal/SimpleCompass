@@ -8,11 +8,10 @@ import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
 import me.arboriginal.SimpleCompass.managers.TaskManager.TasksTypes;
-import me.arboriginal.SimpleCompass.managers.TrackerManager.TrackerTypes;
 import me.arboriginal.SimpleCompass.plugin.SimpleCompass;
 
 public abstract class AbstractCompass {
-  protected SimpleCompass  plugin;
+  protected SimpleCompass  sc;
   protected CompassTypes   type;
   protected BukkitRunnable task    = null;
   protected String         warning = "";
@@ -31,10 +30,10 @@ public abstract class AbstractCompass {
   // Constructor methods
   // ----------------------------------------------------------------------------------------------
 
-  public AbstractCompass(SimpleCompass main, Player player, CompassTypes compassTypes) {
-    plugin = main;
-    type   = compassTypes;
-    owner  = player;
+  public AbstractCompass(SimpleCompass plugin, Player player, CompassTypes compassTypes) {
+    sc    = plugin;
+    type  = compassTypes;
+    owner = player;
 
     init();
     refresh();
@@ -51,13 +50,12 @@ public abstract class AbstractCompass {
   // ----------------------------------------------------------------------------------------------
 
   public void delete() {
-    plugin.tasks.clear(TasksTypes.REFRESH_STATUS, owner);
+    sc.tasks.clear(TasksTypes.REFRESH_STATUS, owner);
 
     if (task != null) task.cancel();
-    if (plugin.compasses.hasRequiredItems(owner, type, false)) return;
+    if (sc.compasses.hasRequiredItems(owner, type, false)) return;
 
-    String message = plugin.prepareMessage("warnPlayerNoMoreFuel");
-
+    String message = sc.prepareMessage("warnPlayerNoMoreFuel");
     if (message.isEmpty()) return;
 
     warning = message;
@@ -79,19 +77,19 @@ public abstract class AbstractCompass {
 
     if (rotation < 0) rotation += 360;
 
-    CompassModes mode = plugin.datas.getCompassMode(owner, type);
+    CompassModes mode = sc.datas.compassModeGet(owner, type);
 
     String prefix = "compass." + type + "." + mode;
-    String sep    = plugin.config.getString(prefix + ".separator_value");
-    String cSep   = plugin.config.getString(prefix + ".separator_color");
-    String cOn    = plugin.config.getString(prefix + ".active_color");
-    String cOff   = plugin.config.getString(prefix + ".inactive_color");
-    String nOn    = plugin.config.getString(prefix + ".active_north_color");
-    String nOff   = plugin.config.getString(prefix + ".north_color");
-    String west   = plugin.config.getString(prefix + ".cardinals.west");
-    String north  = plugin.config.getString(prefix + ".cardinals.north");
-    String east   = plugin.config.getString(prefix + ".cardinals.east");
-    String south  = plugin.config.getString(prefix + ".cardinals.south");
+    String sep    = sc.config.getString(prefix + ".separator_value");
+    String cSep   = sc.config.getString(prefix + ".separator_color");
+    String cOn    = sc.config.getString(prefix + ".active_color");
+    String cOff   = sc.config.getString(prefix + ".inactive_color");
+    String nOn    = sc.config.getString(prefix + ".active_north_color");
+    String nOff   = sc.config.getString(prefix + ".north_color");
+    String west   = sc.config.getString(prefix + ".cardinals.west");
+    String north  = sc.config.getString(prefix + ".cardinals.north");
+    String east   = sc.config.getString(prefix + ".cardinals.east");
+    String south  = sc.config.getString(prefix + ".cardinals.south");
     String datas  = sep + "♤" + sep + "♡" + sep + "♢" + sep + "♧";
     int    start  = (int) Math.round(rotation * datas.length() / 360);
     char   face   = getFacing();
@@ -105,13 +103,13 @@ public abstract class AbstractCompass {
 
     datas = injectActivatedTrackers(datas, cSep);
 
-    return plugin.config.getString(prefix + ".before") + cSep
-        + datas
-            .replace("♤", ((face == 'W') ? cOn : cOff) + west + cSep)
+    return sc.config.getString(prefix + ".before") + cSep
+        + datas // @formatter:off
+            .replace("♤", ((face == 'W') ? cOn : cOff) + west  + cSep)
             .replace("♡", ((face == 'N') ? nOn : nOff) + north + cSep)
-            .replace("♢", ((face == 'E') ? cOn : cOff) + east + cSep)
+            .replace("♢", ((face == 'E') ? cOn : cOff) + east  + cSep)
             .replace("♧", ((face == 'S') ? cOn : cOff) + south + cSep)
-        + plugin.config.getString(prefix + ".after");
+        + sc.config.getString(prefix + ".after"); // @formatter:on
   }
 
   private char getFacing() {
@@ -124,9 +122,22 @@ public abstract class AbstractCompass {
     return Arrays.asList('S', 'W', 'N', 'E').get(Math.round(owner.getLocation().getYaw() / 90f) & 0x3);
   }
 
-  private String injectActivatedTrackers(String compass, String sepColor) {
-    HashMap<TrackerTypes, ArrayList<double[]>> trackers = plugin.trackers.getActivatedTrackersCoords(owner);
+  private HashMap<String, ArrayList<double[]>> getActiveTrackers() { // @formatter:off
+    String cacheKey = "trackers." + type;
+    @SuppressWarnings("unchecked")
+    HashMap<String, ArrayList<double[]>> trackers
+      = (HashMap<String, ArrayList<double[]>>) sc.cache.get(owner.getUniqueId(), cacheKey);
 
+    if (trackers == null) {
+      trackers = sc.targets.getTargetsCoords(owner);
+      sc.cache.set(owner.getUniqueId(), cacheKey, trackers, sc.config.getInt("delays.trackers_list"));
+    }
+
+    return trackers;
+  } // @formatter:on
+
+  private String injectActivatedTrackers(String compass, String sepColor) {
+    HashMap<String, ArrayList<double[]>> trackers = getActiveTrackers();
     if (trackers.isEmpty()) return compass;
 
     Location refPos = owner.getEyeLocation();
@@ -134,13 +145,13 @@ public abstract class AbstractCompass {
 
     HashMap<String, String> placeholders = new HashMap<String, String>();
 
-    for (TrackerTypes type : plugin.trackers.trackersPriority) {
+    for (String type : sc.targets.trackersPriority) {
       ArrayList<double[]> coords = trackers.get(type);
 
       if (coords == null) continue;
 
-      String marker = plugin.config.getString("tracker_settings.trackers." + type + ".temp");
-      String symbol = plugin.config.getString("tracker_settings.trackers." + type + ".symbol");
+      String marker = sc.config.getString("tracker_settings.trackers." + type + ".temp");
+      String symbol = sc.config.getString("tracker_settings.trackers." + type + ".symbol");
 
       placeholders.put(marker, symbol + sepColor);
 

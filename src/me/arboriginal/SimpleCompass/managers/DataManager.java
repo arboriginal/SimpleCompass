@@ -6,30 +6,30 @@ import java.util.ArrayList;
 import java.util.List;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
+import me.arboriginal.SimpleCompass.commands.AbstractCommand.CompassOptions;
 import me.arboriginal.SimpleCompass.compasses.AbstractCompass.CompassModes;
 import me.arboriginal.SimpleCompass.compasses.AbstractCompass.CompassTypes;
 import me.arboriginal.SimpleCompass.managers.TaskManager.TasksTypes;
-import me.arboriginal.SimpleCompass.managers.TrackerManager.TrackerTypes;
 import me.arboriginal.SimpleCompass.plugin.SimpleCompass;
 import me.arboriginal.SimpleCompass.utils.CacheUtil;
-import me.arboriginal.SimpleCompass.utils.OptionUtil.CompassOptions;
 
 public class DataManager {
-  private SimpleCompass     plugin;
-  private File              datasFile;
-  private YamlConfiguration usersDatas;
+  private SimpleCompass sc;
+  private File          file;
+
+  public YamlConfiguration users;
 
   //-----------------------------------------------------------------------------------------------
   // Constructor methods
   // ----------------------------------------------------------------------------------------------
 
-  public DataManager(SimpleCompass main) {
-    plugin     = main;
-    usersDatas = new YamlConfiguration();
-    datasFile  = new File(plugin.getDataFolder(), "usersDatas.yml");
+  public DataManager(SimpleCompass plugin) {
+    sc    = plugin;
+    users = new YamlConfiguration();
+    file  = new File(sc.getDataFolder(), "usersDatas.yml");
 
-    if (datasFile.exists())
-      usersDatas = YamlConfiguration.loadConfiguration(datasFile);
+    if (file.exists())
+      users = YamlConfiguration.loadConfiguration(file);
     else
       saveUserDatas();
   }
@@ -42,32 +42,29 @@ public class DataManager {
     return player.getUniqueId() + "." + key;
   }
 
-  public void saveUserDatas() {
+  public boolean saveUserDatas() {
     try {
-      if (!datasFile.exists()) {
-        datasFile.createNewFile();
-      }
+      if (!file.exists()) file.createNewFile();
 
-      usersDatas.save(datasFile);
+      users.save(file);
+      return true;
     }
     catch (IOException e) {
-      plugin.getLogger().severe(plugin.prepareMessage("file_not_writable"));
+      sc.getLogger().severe(sc.prepareMessage("file_not_writable"));
     }
+
+    return false;
   }
 
   // ----------------------------------------------------------------------------------------------
   // Cooldown methods
   // ----------------------------------------------------------------------------------------------
 
-  public String getCooldownKey(Player player, String cooldown) {
-    return getKey(player, "cooldowns." + cooldown);
-  }
+  public Long cooldownGet(Player player, String cooldown) {
+    String dataKey = cooldownKey(player, cooldown);
 
-  public Long getCooldown(Player player, String cooldown) {
-    String dataKey = getCooldownKey(player, cooldown);
-
-    if (usersDatas.contains(dataKey)) {
-      Long left = usersDatas.getLong(dataKey) - CacheUtil.now();
+    if (users.contains(dataKey)) {
+      Long left = users.getLong(dataKey) - CacheUtil.now();
 
       if (left > 0) return left;
     }
@@ -75,190 +72,131 @@ public class DataManager {
     return 0L;
   }
 
-  public void setCooldown(Player player, String cooldown, int delay) {
-    usersDatas.set(getCooldownKey(player, cooldown), CacheUtil.now() + delay * 1000);
+  public String cooldownKey(Player player, String cooldown) {
+    return getKey(player, "cooldowns." + cooldown);
+  }
 
+  public void cooldownSet(Player player, String cooldown, int delay) {
+    users.set(cooldownKey(player, cooldown), CacheUtil.now() + delay * 1000);
     saveUserDatas();
   }
 
   // Book cooldown
 
-  public Long getBookCooldown(Player player) {
-    return getCooldown(player, "interface_book");
+  public String cooldownBook() {
+    return "interface_book";
   }
 
-  public void setBookCooldown(Player player) {
-    setCooldown(player, "interface_book", plugin.config.getInt("interface.give_book_cooldown"));
+  public Long cooldownBookGet(Player player) {
+    return cooldownGet(player, cooldownBook());
+  }
+
+  public void cooldownBookSet(Player player) {
+    cooldownSet(player, cooldownBook(), sc.config.getInt("interface.give_book_cooldown"));
   }
 
   // Consume cooldown
 
-  public Long getConsumeCooldown(Player player, CompassTypes type) {
-    return getCooldown(player, "consume_" + type);
+  public String cooldownConsume(CompassTypes type) {
+    return "consume_" + type;
   }
 
-  public void setConsumeCooldown(Player player, CompassTypes type) {
-    setCooldown(player, "consume_" + type, plugin.config.getInt("compass." + type + ".require.duration"));
+  public Long cooldownConsumeGet(Player player, CompassTypes type) {
+    return cooldownGet(player, cooldownConsume(type));
+  }
+
+  public void cooldownConsumeSet(Player player, CompassTypes type) {
+    cooldownSet(player, cooldownConsume(type), sc.config.getInt("compass." + type + ".require.duration"));
   }
 
   // ----------------------------------------------------------------------------------------------
   // Compass options methods
   // ----------------------------------------------------------------------------------------------
 
-  public String getCompassOptionKey(Player player, CompassTypes type) {
+  public CompassOptions compassOptionGet(Player player, CompassTypes type) {
+    String key = compassOptionKey(player, type);
+
+    return CompassOptions.valueOf(users.contains(key) ? users.getString(key)
+        : sc.config.getDefaults().getString("compass." + type + ".default.option"));
+  }
+
+  public String compassOptionKey(Player player, CompassTypes type) {
     return getKey(player, type + ".option");
   }
 
-  public CompassOptions getCompassOption(Player player, CompassTypes type) {
-    String key = getCompassOptionKey(player, type);
-
-    return CompassOptions.valueOf(usersDatas.contains(key) ? usersDatas.getString(key)
-        : plugin.config.getDefaults().getString("compass." + type + ".default.option"));
-  }
-
-  public void setCompassOption(Player player, CompassTypes type, CompassOptions option) {
-    if (plugin.config.getBoolean("single_compass_mode") && !option.equals(CompassOptions.DISABLED))
+  public void compassOptionSet(Player player, CompassTypes type, CompassOptions option) {
+    if (sc.config.getBoolean("single_compass_mode") && !option.equals(CompassOptions.DISABLED))
       for (CompassTypes otherType : CompassTypes.values())
         if (!type.equals(otherType))
-          usersDatas.set(getCompassOptionKey(player, otherType), CompassOptions.DISABLED.toString());
+          users.set(compassOptionKey(player, otherType), CompassOptions.DISABLED.toString());
 
-    usersDatas.set(getCompassOptionKey(player, type), option.toString());
+    users.set(compassOptionKey(player, type), option.toString());
     saveUserDatas();
 
-    plugin.tasks.set(TasksTypes.valueOf("REFRESH_" + type), player);
+    sc.tasks.set(TasksTypes.valueOf("REFRESH_" + type), player);
   }
 
   // ----------------------------------------------------------------------------------------------
   // Compass modes methods
   // ----------------------------------------------------------------------------------------------
 
-  public String getCompassModeKey(Player player, CompassTypes type) {
+  public CompassModes compassModeGet(Player player, CompassTypes type) {
+    String key = compassModeKey(player, type);
+
+    return CompassModes.valueOf(users.contains(key) ? users.getString(key)
+        : sc.config.getDefaults().getString("compass." + type + ".default.mode"));
+  }
+
+  public String compassModeKey(Player player, CompassTypes type) {
     return getKey(player, type + ".mode");
   }
 
-  public CompassModes getCompassMode(Player player, CompassTypes type) {
-    String key = getCompassModeKey(player, type);
-
-    return CompassModes.valueOf(usersDatas.contains(key) ? usersDatas.getString(key)
-        : plugin.config.getDefaults().getString("compass." + type + ".default.mode"));
-  }
-
-  public void setCompassMode(Player player, CompassTypes type, CompassModes mode) {
-    usersDatas.set(getCompassModeKey(player, type), mode.toString());
+  public void compassModeSet(Player player, CompassTypes type, CompassModes mode) {
+    users.set(compassModeKey(player, type), mode.toString());
     saveUserDatas();
 
-    plugin.tasks.set(TasksTypes.valueOf("REFRESH_" + type), player);
+    sc.tasks.set(TasksTypes.valueOf("REFRESH_" + type), player);
   }
 
   // ----------------------------------------------------------------------------------------------
-  // Player trackers activation methods
+  // Tracker targets methods
   // ----------------------------------------------------------------------------------------------
 
-  public void playerAtivatedTrackerAdd(Player player, TrackerTypes type, String name) {
-    List<String> list = playerAtivatedTrackersList(player, type);
-
-    if (list.contains(name)) return;
+  public boolean activeTargetAdd(Player player, String type, String name) {
+    List<String> list = activeTargetsList(player, type);
+    if (list.contains(name)) return false;
 
     list.add(name);
-
-    playerAtivatedTrackersSave(player, type, list);
+    activeTargetsSave(player, type, list);
+    return true;
   }
 
-  public void playerAtivatedTrackerDel(Player player, TrackerTypes type, String name) {
-    List<String> list = playerAtivatedTrackersList(player, type);
-
-    if (!list.contains(name)) return;
+  public boolean activeTargetDel(Player player, String type, String name) {
+    List<String> list = activeTargetsList(player, type);
+    if (!list.contains(name)) return false;
 
     list.remove(name);
-
-    playerAtivatedTrackersSave(player, type, list);
-  }
-
-  public List<String> playerAtivatedTrackersList(Player player, TrackerTypes type) {
-    String       key  = getKey(player, "active_trackers." + type);
-    List<String> list = new ArrayList<String>();
-
-    if (usersDatas.getList(key) != null)
-      for (Object tracker : usersDatas.getList(key))
-        if (tracker instanceof String) list.add((String) tracker);
-
-    return list;
-  }
-
-  public void playerAtivatedTrackersSave(Player player, TrackerTypes type, List<String> list) {
-    usersDatas.set(getKey(player, "active_trackers." + type), list);
-    saveUserDatas();
-
-    plugin.tasks.set(TasksTypes.REFRESH_ACTIONBAR, player);
-    plugin.tasks.set(TasksTypes.REFRESH_BOSSBAR, player);
-  }
-
-  // ----------------------------------------------------------------------------------------------
-  // Coords tracker methods
-  // ----------------------------------------------------------------------------------------------
-
-  public String getPlayerRegisteredCoordsKey(Player player) {
-    return getPlayerRegisteredCoordsKey(player, null);
-  }
-
-  public String getPlayerRegisteredCoordsKey(Player player, String name) {
-    return getKey(player, "coords" + (name == null ? "" : "." + name));
-  }
-
-  public double[] getPlayerRegisteredCoords(Player player, String name) {
-    String key = getPlayerRegisteredCoordsKey(player, name);
-
-    if (usersDatas.contains(key + ".x") && usersDatas.contains(key + ".z")) {
-      try {
-        double[] coords = { usersDatas.getDouble(key + ".x"), usersDatas.getDouble(key + ".z") };
-        return coords;
-      }
-      catch (Exception e) {}
-    }
-
-    return null;
-  }
-
-  public List<String> getPlayerRegisteredCoordsList(Player player) {
-    List<String> list = new ArrayList<String>();
-
-    String key = getPlayerRegisteredCoordsKey(player);
-
-    if (usersDatas.contains(key)) {
-      list.addAll(usersDatas.getConfigurationSection(key).getKeys(false));
-    }
-
-    return list;
-  }
-
-  public boolean removePlayerRegisteredCoords(Player player, String name) {
-    String key = getPlayerRegisteredCoordsKey(player, name);
-
-    if (usersDatas.contains(key)) {
-      plugin.trackers.disableTracker(TrackerTypes.COORDS, player, name);
-      usersDatas.set(key, null);
-      saveUserDatas();
-
-      return true;
-    }
-
-    return false;
-  }
-
-  public boolean setPlayerRegisteredCoords(Player player, String name, double[] coords) {
-    String key = getPlayerRegisteredCoordsKey(player, name);
-
-    if (usersDatas.contains(key)) return false;
-
-    if (coords == null) {
-      double[] currentPosition = { player.getLocation().getX(), player.getLocation().getZ() };
-      coords = currentPosition;
-    }
-
-    usersDatas.set(key + ".x", coords[0]);
-    usersDatas.set(key + ".z", coords[1]);
-    saveUserDatas();
-
+    activeTargetsSave(player, type, list);
     return true;
+  }
+
+  public String activeTargetsKey(Player player, String type) {
+    return getKey(player, "active_targets." + type);
+  }
+
+  public List<String> activeTargetsList(Player player, String type) {
+    String       key  = activeTargetsKey(player, type);
+    List<String> list = new ArrayList<String>();
+
+    if (users.getList(key) != null) for (String tracker : users.getStringList(key)) list.add(tracker);
+
+    return list;
+  }
+
+  public void activeTargetsSave(Player player, String type, List<String> list) {
+    users.set(activeTargetsKey(player, type), list);
+    saveUserDatas();
+    sc.tasks.set(TasksTypes.REFRESH_ACTIONBAR, player);
+    sc.tasks.set(TasksTypes.REFRESH_BOSSBAR, player);
   }
 }

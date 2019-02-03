@@ -13,24 +13,24 @@ import org.bukkit.configuration.MemoryConfiguration;
 import org.bukkit.configuration.file.FileConfiguration;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import me.arboriginal.SimpleCompass.commands.TrackCommand.TrackingActions;
+import me.arboriginal.SimpleCompass.commands.AbstractCommand.CompassOptions;
+import me.arboriginal.SimpleCompass.commands.AbstractCommand.SubCmds;
 import me.arboriginal.SimpleCompass.compasses.AbstractCompass.CompassModes;
 import me.arboriginal.SimpleCompass.compasses.AbstractCompass.CompassTypes;
 import me.arboriginal.SimpleCompass.managers.CompassManager.RequirementsSections;
-import me.arboriginal.SimpleCompass.managers.TrackerManager.TrackerTypes;
 import me.arboriginal.SimpleCompass.plugin.SimpleCompass;
-import me.arboriginal.SimpleCompass.utils.OptionUtil.CompassOptions;
+import me.arboriginal.SimpleCompass.trackers.AbstractTracker.TrackingActions;
 
 public class ConfigUtil {
   private List<ConfigError> errors;
-  private SimpleCompass     plugin;
+  private SimpleCompass     sc;
 
   // ----------------------------------------------------------------------------------------------
   // Constructor methods
   // ----------------------------------------------------------------------------------------------
 
-  public ConfigUtil(SimpleCompass main) {
-    plugin = main;
+  public ConfigUtil(SimpleCompass plugin) {
+    sc = plugin;
   }
 
   // ----------------------------------------------------------------------------------------------
@@ -39,6 +39,15 @@ public class ConfigUtil {
 
   public List<ConfigError> validate(FileConfiguration configuration) {
     clearErrors();
+
+    List<String> modified = new ArrayList<String>();
+
+    modified.addAll(validateCustomNames(TrackingActions.values(), "actions"));
+    modified.addAll(validateCustomNames(sc.trackers.keySet().toArray(), "trackers"));
+    modified.addAll(validateCustomNames(SubCmds.values(), "subcommands"));
+
+    if (!modified.isEmpty())
+      addError("invalid_names", ImmutableMap.of("modified", String.join(" ,", modified)));
 
     validateTrackerSettings();
     validateBossbarAttributes();
@@ -79,16 +88,16 @@ public class ConfigUtil {
   }
 
   private void fixValue(String key) {
-    fixValue(key, plugin.config.getDefaults().get(key));
+    fixValue(key, sc.config.getDefaults().get(key));
   }
 
   private void fixValue(String key, Object value) {
-    plugin.config.set(key, value);
+    sc.config.set(key, value);
   }
 
   private void validateBossbarAttributes() {
     try {
-      BarColor.valueOf(plugin.config.getString("compass.BOSSBAR.attributes.color"));
+      BarColor.valueOf(sc.config.getString("compass.BOSSBAR.attributes.color"));
     }
     catch (Exception e) {
       addError("invalid_bossbar_color");
@@ -96,14 +105,14 @@ public class ConfigUtil {
     }
 
     try {
-      BarStyle.valueOf(plugin.config.getString("compass.BOSSBAR.attributes.style"));
+      BarStyle.valueOf(sc.config.getString("compass.BOSSBAR.attributes.style"));
     }
     catch (Exception e) {
       addError("invalid_bossbar_style");
       fixValue("compass.BOSSBAR.attributes.style");
     }
 
-    ConfigurationSection levels = plugin.config
+    ConfigurationSection levels = sc.config
         .getConfigurationSection("compass.BOSSBAR.attributes.elytra_durability.levels");
 
     if (levels == null) return;
@@ -125,7 +134,7 @@ public class ConfigUtil {
 
   private void validateCardinals(CompassTypes type, CompassModes mode) {
     String key      = type + "." + mode;
-    String fillChar = plugin.config.getString("compass." + key + ".cardinals.filling_char");
+    String fillChar = sc.config.getString("compass." + key + ".cardinals.filling_char");
 
     if (fillChar.isEmpty()) return;
 
@@ -134,10 +143,10 @@ public class ConfigUtil {
     int maxLength = 0;
 
     for (String cardinal : cardinals)
-      maxLength = Math.max(maxLength, plugin.config.getString("compass." + key + ".cardinals." + cardinal).length());
+      maxLength = Math.max(maxLength, sc.config.getString("compass." + key + ".cardinals." + cardinal).length());
 
     for (String cardinal : cardinals) {
-      String word = plugin.config.getString("compass." + key + ".cardinals." + cardinal);
+      String word = sc.config.getString("compass." + key + ".cardinals." + cardinal);
 
       if (word.length() < maxLength) {
         word = StringUtils.repeat(fillChar, (int) Math.floor((double) (maxLength - word.length()) / 2)) + word
@@ -149,9 +158,24 @@ public class ConfigUtil {
     }
   }
 
+  private List<String> validateCustomNames(Object[] values, String section) {
+    List<String> modified = new ArrayList<String>();
+
+    for (Object obj : values) {
+      String key = section + "." + obj;
+
+      if (sc.locale.getString(key).contains(" ")) {
+        sc.locale.getString(sc.locale.getString(key).replaceAll(" ", ""));
+        modified.add(key);
+      }
+    }
+
+    return modified;
+  }
+
   private void validateDefaultSettings(CompassTypes type) {
     try {
-      CompassOptions.valueOf(plugin.config.getString("compass." + type + ".default.option"));
+      CompassOptions.valueOf(sc.config.getString("compass." + type + ".default.option"));
     }
     catch (Exception e) {
       addError("invalid_choice", ImmutableMap.of("type", "" + type, "key", "option"));
@@ -159,7 +183,7 @@ public class ConfigUtil {
     }
 
     try {
-      CompassModes.valueOf(plugin.config.getString("compass." + type + ".default.mode"));
+      CompassModes.valueOf(sc.config.getString("compass." + type + ".default.mode"));
     }
     catch (Exception e) {
       addError("invalid_choice", ImmutableMap.of("type", "" + type, "key", "mode"));
@@ -168,7 +192,7 @@ public class ConfigUtil {
   }
 
   private List<String> validateRequiredItems(CompassTypes type, RequirementsSections section) {
-    List<?>      list  = plugin.config.getList("compass." + type + ".require.items." + section);
+    List<?>      list  = sc.config.getList("compass." + type + ".require.items." + section);
     List<String> items = new ArrayList<String>();
 
     if (list.size() == 0) return items;
@@ -199,34 +223,12 @@ public class ConfigUtil {
   }
 
   private void validateTrackerSettings() {
-    List<String> keys = new ArrayList<String>(), modified = new ArrayList<String>();
+    List<String> priorities = new ArrayList<String>();
 
-    for (TrackingActions action : TrackingActions.values()) keys.add("tracker_settings.actions." + action);
-    for (TrackerTypes tracker : TrackerTypes.values()) keys.add("tracker_settings.trackers." + tracker + ".name");
+    for (String priority : sc.config.getStringList("tracker_settings.priority"))
+      if (!priorities.contains(priority)) priorities.add(priority);
 
-    for (String key : keys)
-      if (plugin.config.getString(key).contains(" ")) {
-        plugin.config.getString(plugin.config.getString(key).replaceAll(" ", ""));
-
-        modified.add(key);
-      }
-
-    if (!modified.isEmpty())
-      addError("invalid_names", ImmutableMap.of("modified", String.join(" ,", modified)));
-
-    List<TrackerTypes> priorities = new ArrayList<TrackerTypes>();
-
-    for (Object priority : plugin.config.getList("tracker_settings.priority"))
-      if (priority instanceof String) {
-        try {
-          TrackerTypes type = TrackerTypes.valueOf((String) priority);
-
-          if (!priorities.contains(type)) priorities.add(type);
-        }
-        catch (Exception e) {}
-      }
-
-    if (priorities.size() != TrackerTypes.values().length) {
+    if (priorities.size() != sc.trackers.size()) {
       fixValue("tracker_settings.priority");
       addError("invalid_priorities");
     }

@@ -26,7 +26,17 @@ public final class NMSUtil {
           .newInstance(key, getClass("PacketDataSerializer").getConstructor(ByteBuf.class)
               .newInstance(Unpooled.buffer(256).setByte(0, (byte) 0).writerIndex(1))));
     }
-    catch (Exception e) {}
+    catch (Exception e1_13) {
+      try {
+        Object key = "MC|BOpen";
+
+        success = sendPacket(player, getClass("PacketPlayOutCustomPayload")
+            .getConstructor(key.getClass(), getClass("PacketDataSerializer"))
+            .newInstance(key, getClass("PacketDataSerializer").getConstructor(ByteBuf.class)
+                .newInstance(Unpooled.buffer(256).setByte(0, (byte) 0).writerIndex(1))));
+      }
+      catch (Exception e1_12) {}
+    }
 
     player.getInventory().setItem(heldSlot, current);
 

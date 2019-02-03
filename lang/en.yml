@@ -32,6 +32,8 @@ file_not_writable: "{prefix}&cUnable to write the users' datas file..."
 
 # When trying to execute a command in console which only works for players
 command_only_for_players: "{prefix}&cThis command can only be executed by a player!"
+# When a command is executed in a bed
+command_no_sleeping: "{prefix}&cThis command cannot be executed in a bed !"
 # Command disabled (by permission) for a player.
 command_no_access: "{prefix}&cYou don't have access to this command!"
 # When a player use a command with wrong arguments
@@ -42,6 +44,8 @@ invalid_option: "{prefix}&6{option} &cis an invalid compass option!"
 invalid_type: "{prefix}&6{type} &cis an invalid compass type!"
 # When the command is used in a short form but when ambigous...
 missing_type: "{prefix}&6You must specify on which type you want to set this option!"
+# When the command is used without a target name
+missing_target: "{prefix}&6You must specify a valid target name!"
 # Target already exists
 target_exists: "{prefix}&e{target} &calready exists."
 # Unknown target for request
@@ -58,12 +62,16 @@ interface_failed_auto_open_give: "{prefix}&eInterface book cannot be auto-opened
 # In case of the book interface cannot be opened automaticaly and the book cannot be given to the player because of a full inventory
 interface_failed_auto_open_give_failed: "{prefix}&eInterface book cannot be auto-opened... And &c&lyou have no free slot to receive the book..."
 # In case of the book interface cannot be opened automaticaly and the book cannot be given to the player because of the cooldown
-interface_book_give_cooldown: "{prefix}&cYou have to wait {delay} seconds before another book interface will be available!"
+interface_book_give_cooldown: "{prefix}&cYou have to wait {delay} before another book interface will be available!"
 
-# Human name for the compass types
-types:
-  ACTIONBAR: "Action bar"
-  BOSSBAR: "Boss bar"
+# You can define your own action names here (choose something short and understandable by your players)
+actions:
+  ADD: add
+  ASK: ask
+  DEL: del
+  HELP: help
+  START: start
+  STOP: stop
 
 # Human name for the compass modes
 modes:
@@ -78,24 +86,105 @@ options:
   ELYTRA_VEHICLE: "Elytra + vehicle"
   DISABLED: "Off"
 
+# You can define your own subcommand names here (choose something short and understandable by your players)
+subcommands:
+  OPTION: option # Sub-command to access options  from /scompass command
+  TRACK: track   # Sub-command to access tracking from /scompass command
+
+time_display:
+  hour: "h"
+  minute: "min"
+  second: "s"
+
+# You can define your own tracker names here (choose something short and understandable by your players)
+trackers:
+  COORDS: coords
+  DEATH_POSITION: death
+  PLAYER: player
+  POSITION: position
+
+# Human name for the compass types
+types:
+  ACTIONBAR: "Action bar"
+  BOSSBAR: "Boss bar"
+
 commands:
   scompass:
     header: |-
       ------------------
          &9&lSimpleCompass&8
-    content: |-
       ------------------
-
+    content: |-
+      &8.
            &0&l{type}&r:
 
           {MODE180} {MODE360}
     footer: |-
       &f . . . . . . . .
     options:
-      active: " &8[&2&l{option}&8]"
-      inactive: " &7[&c{option}&7]"
+      active: "&r &8[&2&l{option}&8]"
+      inactive: "&r &7[&c{option}&7]"
       hover: "&6Click to choose &a&l{option}&6\n&6for &c&l{type}"
     saved: "{prefix}&aYour new settings have been saved."
+    track:
+      per_page: 4
+      content: |-
+        &0&l☼ Tracking &c&l{tracker}
+         {buttons}
+      buttons: # (You can order options of this list.)
+        ASK:
+          text: "&8[&3&l♪&8]"
+          hover: "&6Click to ask for a tracking"
+        START:
+          text: "&8[&2&l⚑&8]"
+          hover: "&6Click to start a tracking"
+        STOP:
+          text: "&8[&4&l⚑&8]"
+          hover: "&6Click to stop a tracking"
+        ADD:
+          text: "&8[&2&l+&8]"
+          hover: "&6Click to add a tracking"
+        DEL:
+          text: "&8[&4&l-&8]"
+          hover: "&6Click to remove a tracking"
+        HELP:
+          text: "&8[&6&l?&8]"
+          hover: "&6Click to display help"
+    books:
+      options:
+        title: "Compass options"
+        author: "{prefix}"
+        lore:
+        - "Edit your option:"
+        - "- compass mode"
+        - "- compass visibility"
+      targets:
+        title: "Target selector"
+        author: "{prefix}"
+        lore:
+        - "Choose the target"
+    targets:
+      per_page: 10
+      header: "&9&lChoose a target"
+      content: "- &6{target}"
+      no_targets: "&cNo target available"
+      hover: "&7Choose &6{target}"
+      prev:
+        title: "&4&l<<<"
+        hover: "Previous page"
+      next:
+        title: "&4&l>>>"
+        hover: "Next page"
+      new:
+        cancel: "!no"
+        name_only: |
+          {prefix}&bEnter a target name
+          &3(type '{word}' to cancel and return to normal chat).
+        name_coords: |
+          {prefix}&bEnter a target name, followed by x and z
+          &7You can omit x and z values, your current coords will be used.
+          &3(type '{word}' to cancel and return to normal chat).
+        cancelled: "{prefix}&6Target creation cancelled."
 
   scoption:
     header: |-
@@ -107,8 +196,8 @@ commands:
       &8.
       &8------------------- &7(click an option to edit your choice)&8 --
     options:
-      active: " &7[&a&l{option}&7]"
-      inactive: " &7[&3{option}&7]"
+      active: "&r &7[&a&l{option}&7]"
+      inactive: "&r &7[&3{option}&7]"
       hover: "&6Click to choose &a&l{option}&6\n&6for &c&l{type}"
     saved: |
       &8.
@@ -125,7 +214,15 @@ commands:
       ADD: "{prefix}&aNamed coordinate &e{target}&a has been created."
       DEL: "{prefix}&aNamed coordinate &e{target}&a has been deleted."
       START: "{prefix}&6You are now tracking &e{target}&6 coordinate."
-      STOP: "{prefix}&6You no longer track &e{target}&6 coorditate."
+      STOP: "{prefix}&6You no longer track &e{target}&6 coordinate."
+
+    DEATH_POSITION:
+      list: "{prefix}&rDeath coordinates: {list}&r."
+      list_coord: "&6x: &c{x} &r/ &6z: &c{z}"
+      list_empty: "{prefix}&rNo death coordinates."
+
+      START: "{prefix}&6You are now tracking your &elast death&6 position."
+      STOP: "{prefix}&6You no longer track your &elast death&6 position."
 
     PLAYER:
       list: "{prefix}&rTracked players: {list}."
@@ -157,6 +254,8 @@ commands:
         accepted:
           player: "{prefix}&e{target}&r has &aaccepted&r your request."
           target: "{prefix}&e{player}&r is now tracking you..."
+          player_limit_reached: "{prefix}&e{target}&r has &aaccepted&r your request, but you cannot track more players."
+          target_limit_reached: "{prefix}&e{player}&r cannot track more players and is NOT tracking you for now..."
         refused:
           player: "{prefix}&e{target}&r has &crefused&r your request."
           target: "{prefix}&e{player}&r will not track you."
@@ -171,53 +270,68 @@ commands:
       STOP: "{prefix}&6You no longer track &e{target}&6 position."
 
     help: # See tracker_settings for values substitutions
-      header: "&e|  {prefix} &a&lHelp"
+      header: "&e|  {prefix} &aHelp &l{tracker} &atracking"
       separator: "&e-----------------------------------------------------"
 
       COORDS:
         noargs: |
-          &r- &c/sctrack &e{COORDS}
+          &r- &c/{command} &e{COORDS}
           &7  Show the list of your named coordinates.
         ADD: |
-          &r- &c/sctrack &e{COORDS} &6{ADD} &3<name> &b<x> <z>
+          &r- &c/{command} &e{COORDS} &6{ADD} &3<name> &b<x> <z>
           &7  Add a new named coordinate.
         DEL: |
-          &r- &c/sctrack &e{COORDS} &6{DEL} &3<name>
+          &r- &c/{command} &e{COORDS} &6{DEL} &3<name>
           &7  Delete a named coordinate.
         START: |
-          &r- &c/sctrack &e{COORDS} &6{START} &3<name>
+          &r- &c/{command} &e{COORDS} &6{START} &3<name>
           &7  Begin the tracking of this named coordinate.
         STOP: |
-          &r- &c/sctrack &e{COORDS} &6{STOP} &3<name>
+          &r- &c/{command} &e{COORDS} &6{STOP} &3<name>
           &7  End the tracking of this named coordinate.
+
+      DEATH_POSITION:
+        noargs: |
+          &r- &c/{command} &e{DEATH_POSITION}
+          &7  Show your last death coordinates.
+        START: |
+          &r- &c/{command} &e{DEATH_POSITION} &6{START}
+          &7  Begin the tracking of your last death coordinate.
+        STOP: |
+          &r- &c/{command} &e{DEATH_POSITION} &6{STOP}
+          &7  End the tracking of your last death coordinate.
 
       PLAYER:
         noargs: |
-          &r- &c/sctrack &e{PLAYER}
+          &r- &c/{command} &e{PLAYER}
           &7  Show list of players you are currently tracking.
         ASK: |
-          &r- &c/sctrack &e{PLAYER} &6{ASK} &3<name>
+          &r- &c/{command} &e{PLAYER} &6{ASK} &3<name>
           &7  Ask to a player to track his position.
         START: |
-          &r- &c/sctrack &e{PLAYER} &6{START} &3<name>
+          &r- &c/{command} &e{PLAYER} &6{START} &3<name>
           &7  Begin the tracking of this player (without asking).
         STOP: |
-          &r- &c/sctrack &e{PLAYER} &6{STOP} &3<name>
+          &r- &c/{command} &e{PLAYER} &6{STOP} &3<name>
           &7  End the tracking of this player.
 
       POSITION:
         noargs: |
-          &r- &c/sctrack &e{POSITION}
+          &r- &c/{command} &e{POSITION}
           &7  Show list of trackable positions.
         ADD: |
-          &r- &c/sctrack &e{POSITION} &6{ADD} &3<name> &b<x> <z>
+          &r- &c/{command} &e{POSITION} &6{ADD} &3<name> &b<x> <z>
           &7  Create a new trackable position.
         DEL: |
-          &r- &c/sctrack &e{POSITION} &6{DEL} &3<name>
+          &r- &c/{command} &e{POSITION} &6{DEL} &3<name>
           &7  Remove this trackable position.
         START: |
-          &r- &c/sctrack &e{POSITION} &6{START} &3<name>
+          &r- &c/{command} &e{POSITION} &6{START} &3<name>
           &7  Begin the tracking of this named position.
         STOP: |
-          &r- &c/sctrack &e{POSITION} &6{STOP} &3<name>
+          &r- &c/{command} &e{POSITION} &6{STOP} &3<name>
           &7  End the tracking of this named position.
+
+    limits:
+      ADD: "{prefix}&cYou have reached the limit of {tracker}."
+      START: "{prefix}&cYou cannot track more than {limit} {tracker}."

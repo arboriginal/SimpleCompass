@@ -10,6 +10,7 @@ import org.bukkit.event.entity.EntityToggleGlideEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryOpenEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
+import org.bukkit.event.player.PlayerCommandSendEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
@@ -22,16 +23,16 @@ import me.arboriginal.SimpleCompass.managers.TaskManager.TasksTypes;
 import me.arboriginal.SimpleCompass.utils.CacheUtil;
 
 public class Listeners implements Listener {
-  private SimpleCompass       plugin;
-  private HashMap<UUID, Long> locks;
+  public SimpleCompass       sc;
+  public HashMap<UUID, Long> locks;
 
   // ----------------------------------------------------------------------------------------------
   // Constructor methods
   // ----------------------------------------------------------------------------------------------
 
-  public Listeners(SimpleCompass main) {
-    plugin = main;
-    locks  = new HashMap<UUID, Long>();
+  public Listeners(SimpleCompass plugin) {
+    sc    = plugin;
+    locks = new HashMap<UUID, Long>();
   }
 
   // ----------------------------------------------------------------------------------------------
@@ -42,14 +43,14 @@ public class Listeners implements Listener {
   public void onEntityPickupItem(EntityPickupItemEvent event) {
     if (event.isCancelled() || !(event.getEntity() instanceof Player)) return;
 
-    plugin.tasks.set(TasksTypes.REFRESH_STATUS, (Player) event.getEntity());
+    sc.tasks.set(TasksTypes.REFRESH_STATUS, (Player) event.getEntity());
   }
 
   @EventHandler
   public void onEntityToggleGlide(EntityToggleGlideEvent event) {
     if (event.isCancelled() || !(event.getEntity() instanceof Player)) return;
 
-    plugin.tasks.set(TasksTypes.REFRESH_STATUS, (Player) event.getEntity());
+    sc.tasks.set(TasksTypes.REFRESH_STATUS, (Player) event.getEntity());
   }
 
   @EventHandler
@@ -58,31 +59,38 @@ public class Listeners implements Listener {
 
     if (!(holder instanceof Player)) return;
 
-    plugin.tasks.set(TasksTypes.REFRESH_STATUS, (Player) holder);
+    sc.tasks.set(TasksTypes.REFRESH_STATUS, (Player) holder);
   }
 
   @EventHandler
   public void onInventoryOpen(InventoryOpenEvent event) {
     if (event.isCancelled()) return;
 
-    plugin.tasks.clear(TasksTypes.REFRESH_STATUS, (Player) event.getPlayer());
+    sc.tasks.clear(TasksTypes.REFRESH_STATUS, (Player) event.getPlayer());
   }
 
   @EventHandler
   public void onPlayerCommandPreprocess(PlayerCommandPreprocessEvent event) {
     if (event.isCancelled()) return;
 
-    plugin.compasses.commandTrigger(event.getMessage().substring(1));
+    sc.compasses.commandTrigger(event.getMessage().substring(1));
+  }
+
+  @EventHandler
+  public void onPlayerCommandSend(PlayerCommandSendEvent event) {
+    if (!(event.getPlayer() instanceof Player)) return;
+
+    sc.tasks.set(TasksTypes.REFRESH_STATUS, event.getPlayer());
   }
 
   @EventHandler
   public void onPlayerJoin(PlayerJoinEvent event) {
     Player player = event.getPlayer();
 
-    plugin.cache.init(player.getUniqueId());
-    plugin.trackers.loadTrackers(player);
-    plugin.tasks.set(TasksTypes.REFRESH_STATUS, player);
-    plugin.tasks.set(TasksTypes.FIX_UUID, player);
+    sc.cache.init(player.getUniqueId());
+    sc.targets.loadTargets(player);
+    sc.tasks.set(TasksTypes.REFRESH_STATUS, player);
+    sc.tasks.set(TasksTypes.FIX_UUID, player);
   }
 
   @EventHandler
@@ -95,8 +103,8 @@ public class Listeners implements Listener {
 
     if (locks.containsKey(uid) && locks.get(uid) > now) return;
 
-    locks.put(uid, now + plugin.config.getInt("delays.update_compass"));
-    plugin.compasses.refreshCompassDatas(event.getPlayer());
+    locks.put(uid, now + sc.config.getInt("delays.update_compass"));
+    sc.compasses.refreshCompassDatas(player);
   }
 
   @EventHandler
@@ -105,36 +113,36 @@ public class Listeners implements Listener {
     UUID   uid    = player.getUniqueId();
 
     locks.remove(uid);
-    plugin.tasks.clear(player);
-    plugin.trackers.unloadTrackers(player);
-    plugin.cache.clear(uid);
+    sc.tasks.clear(player);
+    sc.targets.unloadTargets(player);
+    sc.cache.clear(uid);
   }
 
   @EventHandler
   public void onPlayerSwapHandItems(PlayerSwapHandItemsEvent event) {
     if (event.isCancelled()) return;
 
-    plugin.tasks.set(TasksTypes.REFRESH_STATUS, event.getPlayer());
+    sc.tasks.set(TasksTypes.REFRESH_STATUS, event.getPlayer());
   }
 
   @EventHandler
   public void onVehicleEnter(VehicleEnterEvent event) {
     if (event.isCancelled() || !(event.getEntered() instanceof Player)) return;
 
-    plugin.tasks.set(TasksTypes.REFRESH_STATUS, (Player) event.getEntered());
+    sc.tasks.set(TasksTypes.REFRESH_STATUS, (Player) event.getEntered());
   }
 
   @EventHandler
   public void onVehicleExit(VehicleExitEvent event) {
     if (event.isCancelled() || !(event.getExited() instanceof Player)) return;
 
-    plugin.tasks.set(TasksTypes.REFRESH_STATUS, (Player) event.getExited());
+    sc.tasks.set(TasksTypes.REFRESH_STATUS, (Player) event.getExited());
   }
 
   @EventHandler
   public void onServerCommand(ServerCommandEvent event) {
     if (event.isCancelled()) return;
 
-    plugin.compasses.commandTrigger(event.getCommand());
+    sc.compasses.commandTrigger(event.getCommand());
   }
 }

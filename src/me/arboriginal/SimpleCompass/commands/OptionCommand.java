@@ -1,6 +1,5 @@
 package me.arboriginal.SimpleCompass.commands;
 
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -13,15 +12,14 @@ import com.google.common.collect.ImmutableMap;
 import me.arboriginal.SimpleCompass.compasses.AbstractCompass.CompassModes;
 import me.arboriginal.SimpleCompass.compasses.AbstractCompass.CompassTypes;
 import me.arboriginal.SimpleCompass.plugin.SimpleCompass;
-import me.arboriginal.SimpleCompass.utils.OptionUtil;
 
-public class OptionCommand extends OptionUtil implements CommandExecutor, TabCompleter {
+public class OptionCommand extends AbstractCommand implements CommandExecutor, TabCompleter {
   //-----------------------------------------------------------------------------------------------
   // Constructor methods
   // ----------------------------------------------------------------------------------------------
 
-  public OptionCommand(SimpleCompass main) {
-    super(main, "scoption");
+  public OptionCommand(SimpleCompass plugin) {
+    super(plugin, "scoption");
   }
 
   // ----------------------------------------------------------------------------------------------
@@ -31,12 +29,15 @@ public class OptionCommand extends OptionUtil implements CommandExecutor, TabCom
   @Override
   public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
     if (!(sender instanceof Player)) {
-      plugin.sendMessage(sender, "command_only_for_players");
-
-      return false;
+      sc.sendMessage(sender, "command_only_for_players");
+      return true;
+    }
+    else if (((Player) sender).isSleeping()) {
+      sc.sendMessage(sender, "command_no_sleeping");
+      return true;
     }
 
-    return performCommandOption(sender, args);
+    return performCommandOption((Player) sender, args);
   }
 
   // ----------------------------------------------------------------------------------------------
@@ -45,22 +46,9 @@ public class OptionCommand extends OptionUtil implements CommandExecutor, TabCom
 
   @Override
   public List<String> onTabComplete(CommandSender sender, Command command, String label, String[] args) {
-    List<String> list = new ArrayList<>();
+    if (sender instanceof Player) return completeCommandOption((Player) sender, args);
 
-    switch (args.length) {
-      case 1:
-        for (String option : allowedOptions(sender))
-          if (option.toLowerCase().startsWith(args[0].toLowerCase())) list.add(option);
-        break;
-
-      case 2:
-        if (allowedOptions(sender).contains(args[0]))
-          for (CompassTypes type : allowedTypes(sender))
-            if (type.toString().toLowerCase().startsWith(args[1].toLowerCase())) list.add(type.toString());
-        break;
-    }
-
-    return list;
+    return null;
   }
 
   // ----------------------------------------------------------------------------------------------
@@ -69,19 +57,19 @@ public class OptionCommand extends OptionUtil implements CommandExecutor, TabCom
 
   @Override
   public void showOptions(Player player, CompassTypes modified) {
-    plugin.sendMessage(player, optKey + ".header");
+    sc.sendMessage(player, "commands." + mainCommand + ".header");
 
     for (CompassTypes type : allowedTypes(player)) {
-      CompassModes                     typeMode = plugin.datas.getCompassMode(player, type);
-      CompassOptions                   selected = plugin.datas.getCompassOption(player, type);
+      CompassModes                     typeMode = sc.datas.compassModeGet(player, type);
+      CompassOptions                   selected = sc.datas.compassOptionGet(player, type);
       Map<String, Map<String, String>> commands = new LinkedHashMap<String, Map<String, String>>();
 
       for (CompassModes mode : CompassModes.values())
         commands.put("{" + mode + "}", clickableOption(type, mode, typeMode));
 
       player.spigot().sendMessage(
-          plugin.createClickableMessage(plugin.prepareMessage(optKey + ".content",
-              ImmutableMap.of("type", plugin.locale.getString("types." + type))), commands));
+          sc.createClickableMessage(sc.prepareMessage("commands." + mainCommand + ".content",
+              ImmutableMap.of("type", sc.locale.getString("types." + type))), commands));
 
       commands = new LinkedHashMap<String, Map<String, String>>();
 
@@ -91,11 +79,11 @@ public class OptionCommand extends OptionUtil implements CommandExecutor, TabCom
         commands.put("{" + option + "}", clickableOption(type, option, selected));
       }
 
-      player.spigot().sendMessage(plugin.createClickableMessage(String.join("", commands.keySet()), commands));
+      player.spigot().sendMessage(sc.createClickableMessage(String.join("", commands.keySet()), commands));
     }
 
-    plugin.sendMessage(player, optKey + ".footer");
+    sc.sendMessage(player, "commands." + mainCommand + ".footer");
 
-    if (modified != null) plugin.sendMessage(player, optKey + ".saved");
+    if (modified != null) sc.sendMessage(player, "commands." + mainCommand + ".saved");
   }
 }

@@ -1,25 +1,24 @@
 package me.arboriginal.SimpleCompass.plugin;
 
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import org.apache.commons.lang.time.DurationFormatUtils;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
+import com.google.common.reflect.ClassPath;
 import me.arboriginal.SimpleCompass.commands.InterfaceCommand;
 import me.arboriginal.SimpleCompass.commands.OptionCommand;
 import me.arboriginal.SimpleCompass.commands.TrackCommand;
 import me.arboriginal.SimpleCompass.managers.CompassManager;
 import me.arboriginal.SimpleCompass.managers.DataManager;
+import me.arboriginal.SimpleCompass.managers.TargetManager;
 import me.arboriginal.SimpleCompass.managers.TaskManager;
-import me.arboriginal.SimpleCompass.managers.TrackerManager;
+import me.arboriginal.SimpleCompass.trackers.AbstractTracker;
 import me.arboriginal.SimpleCompass.utils.CacheUtil;
 import me.arboriginal.SimpleCompass.utils.ConfigUtil;
 import me.arboriginal.SimpleCompass.utils.LangUtil;
@@ -33,9 +32,12 @@ public class SimpleCompass extends JavaPlugin implements TabCompleter {
   public CacheUtil         cache;
   public DataManager       datas;
   public TaskManager       tasks;
-  public TrackerManager    trackers;
+  public TargetManager     targets;
   public CompassManager    compasses;
+  public Listeners         listeners;
   public boolean           isReady = false;
+
+  public HashMap<String, AbstractTracker> trackers;
 
   // ----------------------------------------------------------------------------------------------
   // JavaPlugin methods
@@ -43,6 +45,8 @@ public class SimpleCompass extends JavaPlugin implements TabCompleter {
 
   @Override
   public void onDisable() {
+    super.onDisable();
+
     isReady = false;
     compasses.unload();
     tasks.clear();
@@ -50,6 +54,8 @@ public class SimpleCompass extends JavaPlugin implements TabCompleter {
 
   @Override
   public void onEnable() {
+    super.onEnable();
+
     try {
       getServer().spigot();
     }
@@ -60,13 +66,16 @@ public class SimpleCompass extends JavaPlugin implements TabCompleter {
       return;
     }
 
+    loadTrackers();
     reloadConfig();
 
+    if (!trackers.isEmpty()) getCommand("scompass-track").setExecutor(new TrackCommand(this));
+
     getCommand("scompass-option").setExecutor(new OptionCommand(this));
-    getCommand("scompass-track").setExecutor(new TrackCommand(this));
     getCommand("scompass").setExecutor(new InterfaceCommand(this));
 
-    getServer().getPluginManager().registerEvents(new Listeners(this), this);
+    listeners = new Listeners(this);
+    getServer().getPluginManager().registerEvents(listeners, this);
   }
 
   @Override
@@ -86,8 +95,7 @@ public class SimpleCompass extends JavaPlugin implements TabCompleter {
     isReady = false;
     config  = getConfig();
     config.options().copyDefaults(true);
-
-    loadLocale(config.getString("language"));
+    locale = new LangUtil(this).get(config.getString("language"));
 
     for (ConfigUtil.ConfigError error : new ConfigUtil(this).validate(config))
       getLogger().warning(prepareMessage(error.errorKey, error.placeholders));
@@ -98,10 +106,11 @@ public class SimpleCompass extends JavaPlugin implements TabCompleter {
 
     datas     = new DataManager(this);
     tasks     = new TaskManager(this);
-    trackers  = new TrackerManager(this);
+    targets   = new TargetManager(this);
     compasses = new CompassManager(this);
 
-    if (!trackers.loadTrackers()) compasses.refreshCompassState();
+    targets.loadTargets();
+    compasses.refreshCompassState();
 
     isReady = true;
   }
@@ -112,53 +121,14 @@ public class SimpleCompass extends JavaPlugin implements TabCompleter {
 
   @Override
   public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-    String cmd = command.getName().toLowerCase();
+    if (command.getName().toLowerCase().equals("scompass-reload")) {
+      reloadConfig();
+      sendMessage(sender, "configuration_reloaded");
 
-    switch (cmd) {
-      case "scompass-reload":
-        reloadConfig();
-        sendMessage(sender, "configuration_reloaded");
-
-        return true;
-
-      case "scompass-track-accept":
-      case "scompass-track-deny":
-        if (!(sender instanceof Player) || args.length != 1) return false;
-        return trackers.respondPlayerTrackerRequest((Player) sender, args[0], (cmd.equals("scompass-track-accept")));
+      return true;
     }
 
     return super.onCommand(sender, command, label, args);
-  }
-
-  // ----------------------------------------------------------------------------------------------
-  // TabCompleter methods
-  // ----------------------------------------------------------------------------------------------
-
-  @Override
-  public List<String> onTabComplete(CommandSender sender, Command command, String label, String[] args) {
-    switch (command.getName().toLowerCase()) {
-      case "sctaccept":
-      case "sctdeny":
-        if (!(sender instanceof Player) || args.length != 1) return null;
-
-        Set<UUID> candidates = trackers.getPlayerTrackerRequests((Player) sender);
-
-        if (candidates == null) return null;
-
-        List<String> list = new ArrayList<String>();
-
-        for (UUID uid : candidates) {
-          Player candidate = getServer().getPlayer(uid);
-
-          if (candidate != null && candidate.getName().toLowerCase().startsWith(args[0].toLowerCase()))
-            list.add(candidate.getName());
-        }
-
-        return list;
-
-      default:
-        return null;
-    }
   }
 
   // ----------------------------------------------------------------------------------------------
@@ -167,6 +137,29 @@ public class SimpleCompass extends JavaPlugin implements TabCompleter {
 
   public String formatMessage(String message) {
     return ChatColor.translateAlternateColorCodes('&', message);
+  }
+
+  public String formatTime(long time) {
+    String[] parts  = DurationFormatUtils.formatDuration(time, "HH:mm:ss").split(":");
+    String   hour   = locale.getString("time_display.hour");
+    String   minute = locale.getString("time_display.minute");
+    String   second = locale.getString("time_display.second");
+    String   human  = "";
+
+    if (time < 60000) {
+      human = Math.max(Integer.parseInt(parts[2]), 1) + second;
+    }
+    else {
+      if (time >= 3600000) {
+        human = parts[0] + hour + " ";
+      }
+
+      human += (time > config.getInt("min_time_to_display_seconds") * 1000)
+          ? parts[1] + minute + " " + parts[2] + second
+          : (Integer.parseInt(parts[1]) + 1) + minute;
+    }
+
+    return human.replaceFirst("^0+(?!$)", "");
   }
 
   public String prepareMessage(String key) {
@@ -192,6 +185,8 @@ public class SimpleCompass extends JavaPlugin implements TabCompleter {
   }
 
   public void sendMessage(CommandSender sender, String key, Map<String, String> placeholders) {
+    if (key.isEmpty()) return;
+
     String message = prepareMessage(key, placeholders);
 
     if (!message.isEmpty()) sender.sendMessage(message);
@@ -211,7 +206,7 @@ public class SimpleCompass extends JavaPlugin implements TabCompleter {
         Map<String, String> command = commands.get(((TextComponent) component).getText().trim());
 
         if (command != null) {
-          if (command.containsKey("text")) ((TextComponent) component).setText(command.get("text"));
+          if (command.containsKey("text")) ((TextComponent) component).setText("§r" + command.get("text"));
 
           if (command.containsKey("click"))
             component.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, command.get("click")));
@@ -232,7 +227,34 @@ public class SimpleCompass extends JavaPlugin implements TabCompleter {
   // Private methods
   // ----------------------------------------------------------------------------------------------
 
-  private void loadLocale(String language) {
-    locale = new LangUtil(this).get(language);
+  private void loadTrackers() {
+    trackers = new HashMap<String, AbstractTracker>();
+
+    try {
+      for (ClassPath.ClassInfo classInfo : ClassPath.from(getClassLoader())
+          .getTopLevelClasses(AbstractTracker.class.getPackage().getName())) {
+        if (classInfo.getSimpleName().equals("AbstractTracker")) continue;
+
+        Object tracker = Class.forName(classInfo.getName()).getConstructor(this.getClass()).newInstance(this);
+
+        if (tracker instanceof AbstractTracker) {
+          String trackerID = ((AbstractTracker) tracker).trackerID();
+
+          if (trackers.containsKey(trackerID)) {
+            getLogger().warning(
+                "Tracker {tracker} is using the ID {id} which is already used by {other}, can't load it..."
+                    .replace("{tracker}", classInfo.getSimpleName()).replace("id", trackerID)
+                    .replace("{other}", trackers.get(trackerID).getClass().getSimpleName()));
+            continue;
+          }
+
+          trackers.put(trackerID, (AbstractTracker) tracker);
+          getLogger().info("Tracker {tracker} successfully loaded".replace("{tracker}", classInfo.getSimpleName()));
+        }
+      }
+    }
+    catch (Exception e) {
+      getLogger().severe("Error loading trackers...");
+    }
   }
 }

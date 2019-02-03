@@ -11,14 +11,14 @@ import com.google.common.base.Charsets;
 import me.arboriginal.SimpleCompass.plugin.SimpleCompass;
 
 public class LangUtil {
-  private SimpleCompass plugin;
+  private SimpleCompass sc;
 
   // ----------------------------------------------------------------------------------------------
   // Constructor methods
   // ----------------------------------------------------------------------------------------------
 
-  public LangUtil(SimpleCompass main) {
-    plugin = main;
+  public LangUtil(SimpleCompass plugin) {
+    sc = plugin;
   }
 
   // ----------------------------------------------------------------------------------------------
@@ -31,18 +31,18 @@ public class LangUtil {
 
     String langRes  = "lang/" + language + ".yml";
     String langRdef = "lang/en.yml";
-    File   langFile = new File(plugin.getDataFolder(), langRes);
+    File   langFile = new File(sc.getDataFolder(), langRes);
 
     if (newFile = !langFile.exists()) {
       String logMsg = null;
 
-      plugin.getLogger().warning("Lang file for « " + language + " » doesn't exist.");
+      sc.getLogger().warning("Lang file for « " + language + " » doesn't exist.");
 
-      if (plugin.getResource(langRes) != null) {
+      if (sc.getResource(langRes) != null) {
         logMsg = "Lang file for « " + language + " » copied from plugin.";
       }
       else {
-        plugin.getLogger().warning("Lang « " + language + " » doesn't exist in the plugin either.");
+        sc.getLogger().warning("Lang « " + language + " » doesn't exist in the plugin either.");
 
         try {
           writeResourceToFile(langRdef, langFile);
@@ -51,7 +51,7 @@ public class LangUtil {
           langRes = null;
         }
         catch (Exception e) {
-          plugin.getLogger().severe("Lang file for « " + language + " » cannot be generated.");
+          sc.getLogger().severe("Lang file for « " + language + " » cannot be generated.");
 
           logMsg  = "Fallback to default lang file.";
           langRes = langRdef;
@@ -59,7 +59,7 @@ public class LangUtil {
       }
 
       copyResourceToFile(langRes, langFile);
-      plugin.getLogger().info(logMsg);
+      sc.getLogger().info(logMsg);
     }
 
     locale = YamlConfiguration.loadConfiguration(langFile);
@@ -75,15 +75,15 @@ public class LangUtil {
 
   private void copyResourceToFile(String resource, File file) {
     if (resource != null) {
-      plugin.saveResource(resource, false);
+      sc.saveResource(resource, false);
 
-      file = new File(plugin.getDataFolder(), resource);
+      file = new File(sc.getDataFolder(), resource);
     }
   }
 
   private void saveConfigToFile(FileConfiguration config, File file, String defaultRes) {
     config.setDefaults(YamlConfiguration.loadConfiguration(
-        new InputStreamReader(plugin.getResource(defaultRes), Charsets.UTF_8)));
+        new InputStreamReader(sc.getResource(defaultRes), Charsets.UTF_8)));
     // This ensure sentences added in next versions are stored in the file with their default values
     config.options().copyDefaults(true);
 
@@ -91,7 +91,7 @@ public class LangUtil {
       config.save(file);
     }
     catch (Exception e) {
-      plugin.getLogger().warning("The language file cannot be updated in your plugin folder. "
+      sc.getLogger().warning("The language file cannot be updated in your plugin folder. "
           + "You need to check by yourself if you didn't missed some sentences you want to translate. "
           + "Default language will be used for them.");
     }
@@ -100,15 +100,12 @@ public class LangUtil {
   private void writeResourceToFile(String resource, File file) throws Exception {
     file.getParentFile().mkdirs();
 
-    InputStream  in  = plugin.getResource(resource);
+    InputStream  in  = sc.getResource(resource);
     OutputStream out = new FileOutputStream(file);
+    byte[]       buf = new byte[1024];
+    int          len;
 
-    byte[] buf = new byte[1024];
-    int    len;
-
-    while ((len = in.read(buf)) > 0) {
-      out.write(buf, 0, len);
-    }
+    while ((len = in.read(buf)) > 0) out.write(buf, 0, len);
 
     out.close();
     in.close();

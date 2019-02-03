@@ -6,7 +6,7 @@ import org.bukkit.entity.Player;
 import me.arboriginal.SimpleCompass.plugin.SimpleCompass;
 
 public class CacheUtil {
-  private SimpleCompass                        plugin;
+  private SimpleCompass                        sc;
   private HashMap<UUID, HashMap<String, Data>> datas;
 
   public static final int PERMANENT = -1;
@@ -15,8 +15,8 @@ public class CacheUtil {
   // Constructor methods
   // ----------------------------------------------------------------------------------------------
 
-  public CacheUtil(SimpleCompass main) {
-    plugin = main;
+  public CacheUtil(SimpleCompass plugin) {
+    sc = plugin;
     reset();
   }
 
@@ -53,7 +53,7 @@ public class CacheUtil {
   public void reset() {
     datas = new HashMap<UUID, HashMap<String, Data>>();
 
-    for (Player player : plugin.getServer().getOnlinePlayers()) init(player.getUniqueId());
+    for (Player player : sc.getServer().getOnlinePlayers()) init(player.getUniqueId());
   }
 
   public void set(UUID uid, String key, Object value, int duration) {

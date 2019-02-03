@@ -11,8 +11,8 @@ public class ActionbarCompass extends AbstractCompass {
   // Constructor methods
   // ----------------------------------------------------------------------------------------------
 
-  public ActionbarCompass(SimpleCompass main, Player player) {
-    super(main, player, CompassTypes.ACTIONBAR);
+  public ActionbarCompass(SimpleCompass plugin, Player player) {
+    super(plugin, player, CompassTypes.ACTIONBAR);
   }
 
   // ----------------------------------------------------------------------------------------------
@@ -28,7 +28,7 @@ public class ActionbarCompass extends AbstractCompass {
   public void refresh() {
     super.refresh();
 
-    if (plugin.config.getBoolean("compass.ACTIONBAR.maintain_when_not_moving") && task == null) {
+    if (sc.config.getBoolean("compass.ACTIONBAR.maintain_when_not_moving") && task == null) {
       task = new BukkitRunnable() {
         @Override
         public void run() {
@@ -37,9 +37,9 @@ public class ActionbarCompass extends AbstractCompass {
         }
       };
 
-      Long delay = plugin.config.getLong("compass.ACTIONBAR.maintain_delay");
+      Long delay = sc.config.getLong("compass.ACTIONBAR.maintain_delay");
 
-      task.runTaskTimer(plugin, delay, delay);
+      task.runTaskTimer(sc, delay, delay);
     }
   }
 }

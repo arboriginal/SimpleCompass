@@ -4,13 +4,12 @@ import java.util.HashMap;
 import java.util.UUID;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
-import me.arboriginal.SimpleCompass.compasses.AbstractCompass;
 import me.arboriginal.SimpleCompass.compasses.AbstractCompass.CompassTypes;
 import me.arboriginal.SimpleCompass.compasses.BossbarCompass;
 import me.arboriginal.SimpleCompass.plugin.SimpleCompass;
 
 public class TaskManager {
-  private SimpleCompass                                      plugin;
+  private SimpleCompass                                      sc;
   private HashMap<TasksTypes, HashMap<UUID, BukkitRunnable>> tasks;
 
   public enum TasksTypes {
@@ -21,9 +20,9 @@ public class TaskManager {
   // Constructor methods
   // ----------------------------------------------------------------------------------------------
 
-  public TaskManager(SimpleCompass main) {
-    plugin = main;
-    tasks  = new HashMap<TasksTypes, HashMap<UUID, BukkitRunnable>>();
+  public TaskManager(SimpleCompass plugin) {
+    sc    = plugin;
+    tasks = new HashMap<TasksTypes, HashMap<UUID, BukkitRunnable>>();
 
     for (TasksTypes type : TasksTypes.values()) tasks.put(type, new HashMap<UUID, BukkitRunnable>());
   }
@@ -72,11 +71,11 @@ public class TaskManager {
     set(type, player, null);
   }
 
-  public void set(TasksTypes type, Player player, AbstractCompass compass) {
+  public void set(TasksTypes type, Player player, Object data) {
     UUID uid = player.getUniqueId();
 
-    if (!plugin.isReady) {
-      if (compass != null && compass instanceof BossbarCompass) ((BossbarCompass) compass).bossbar.removeAll();
+    if (!sc.isReady) {
+      if (data != null && data instanceof BossbarCompass) ((BossbarCompass) data).bossbar.removeAll();
       clear(type, uid);
       return;
     }
@@ -88,14 +87,14 @@ public class TaskManager {
         task = new BukkitRunnable() {
           @Override
           public void run() {
-            if (isCancelled() || plugin.compasses.getCompass(CompassTypes.BOSSBAR, uid) == null) return;
-            plugin.compasses.removeCompass(CompassTypes.BOSSBAR, player);
-            plugin.compasses.refreshCompassState(player);
+            if (isCancelled() || sc.compasses.getCompass(CompassTypes.BOSSBAR, uid) == null) return;
+            sc.compasses.removeCompass(CompassTypes.BOSSBAR, player);
+            sc.compasses.refreshCompassState(player);
             clear(type, uid, this);
           }
         };
 
-        task.runTaskLaterAsynchronously(plugin, plugin.config.getInt("delays.fix_uuid"));
+        task.runTaskLaterAsynchronously(sc, sc.config.getInt("delays.fix_uuid"));
         break;
 
       case REFRESH_ACTIONBAR:
@@ -106,12 +105,12 @@ public class TaskManager {
           @Override
           public void run() {
             if (isCancelled()) return;
-            plugin.compasses.refreshCompass(player, compassType);
+            sc.compasses.refreshCompass(player, compassType);
             clear(type, uid, this);
           }
         };
 
-        task.runTaskLaterAsynchronously(plugin, plugin.config.getInt("delays.option_take_effect"));
+        task.runTaskLaterAsynchronously(sc, sc.config.getInt("delays.option_take_effect"));
         break;
 
       case REFRESH_STATUS:
@@ -119,27 +118,27 @@ public class TaskManager {
           @Override
           public void run() {
             if (isCancelled()) return;
-            plugin.compasses.refreshCompassState(player);
+            sc.compasses.refreshCompassState(player);
             clear(type, uid, this);
           }
         };
 
-        task.runTaskLaterAsynchronously(plugin, plugin.config.getInt("delays.refresh_status"));
+        task.runTaskLaterAsynchronously(sc, sc.config.getInt("delays.refresh_status"));
         break;
 
       case REMOVEWARNING:
-        if (compass == null || !(compass instanceof BossbarCompass)) break;
+        if (data == null || !(data instanceof BossbarCompass)) break;
 
         task = new BukkitRunnable() {
           @Override
           public void run() {
             if (isCancelled()) return;
-            ((BossbarCompass) compass).bossbar.removeAll();
+            ((BossbarCompass) data).bossbar.removeAll();
             this.cancel();
           }
         };
 
-        task.runTaskLaterAsynchronously(plugin, plugin.config.getInt("compass.BOSSBAR.warnPlayerNoMoreFuel") * 20);
+        task.runTaskLaterAsynchronously(sc, sc.config.getInt("compass.BOSSBAR.warnPlayerNoMoreFuel") * 20);
         break;
     }
 

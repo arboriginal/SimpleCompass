@@ -1,5 +1,6 @@
 package me.arboriginal.SimpleCompass.managers;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
@@ -20,15 +21,15 @@ public class CompassManager {
     HOTBAR, INVENTORY, MAIN_HAND, OFF_HAND,
   }
 
-  private SimpleCompass                                         plugin;
+  private SimpleCompass                                         sc;
   private HashMap<CompassTypes, HashMap<UUID, AbstractCompass>> compasses;
 
   // ----------------------------------------------------------------------------------------------
   // Constructor methods
   // ----------------------------------------------------------------------------------------------
 
-  public CompassManager(SimpleCompass main) {
-    plugin    = main;
+  public CompassManager(SimpleCompass plugin) {
+    sc        = plugin;
     compasses = new HashMap<CompassTypes, HashMap<UUID, AbstractCompass>>();
 
     for (CompassTypes type : CompassTypes.values()) compasses.put(type, new HashMap<UUID, AbstractCompass>());
@@ -39,9 +40,8 @@ public class CompassManager {
   // ----------------------------------------------------------------------------------------------
 
   public void commandTrigger(String command) {
-    if (plugin.config.getList("commands_trigger_refresh").contains(command.split(" ")[0]))
-      for (Player player : plugin.getServer().getOnlinePlayers())
-        plugin.tasks.set(TasksTypes.REFRESH_STATUS, player);
+    if (sc.config.getList("commands_trigger_refresh").contains(command.split(" ")[0]))
+      for (Player player : sc.getServer().getOnlinePlayers()) sc.tasks.set(TasksTypes.REFRESH_STATUS, player);
   }
 
   public void unload() {
@@ -60,16 +60,16 @@ public class CompassManager {
 
     switch (type) {
       case ACTIONBAR:
-        compass = new ActionbarCompass(plugin, player);
+        compass = new ActionbarCompass(sc, player);
         break;
 
       case BOSSBAR:
-        compass = new BossbarCompass(plugin, player);
+        compass = new BossbarCompass(sc, player);
         break;
     }
 
     if (compass != null) {
-      BukkitRunnable task = plugin.tasks.get(TasksTypes.REMOVEWARNING, uid);
+      BukkitRunnable task = sc.tasks.get(TasksTypes.REMOVEWARNING, uid);
 
       if (task != null) task.run();
 
@@ -120,7 +120,7 @@ public class CompassManager {
 
     boolean active = false;
 
-    switch (plugin.datas.getCompassOption(player, type)) {
+    switch (sc.datas.compassOptionGet(player, type)) {
       case ALWAYS:
         active = true;
         break;
@@ -145,11 +145,11 @@ public class CompassManager {
   }
 
   public void refreshCompassState() {
-    for (Player player : plugin.getServer().getOnlinePlayers()) refreshCompassState(player);
+    for (Player player : sc.getServer().getOnlinePlayers()) refreshCompassState(player);
   }
 
   public void refreshCompassState(CompassTypes type) {
-    for (Player player : plugin.getServer().getOnlinePlayers()) refreshCompassState(player, type);
+    for (Player player : sc.getServer().getOnlinePlayers()) refreshCompassState(player, type);
   }
 
   public void refreshCompassState(Player player) {
@@ -169,22 +169,24 @@ public class CompassManager {
 
   ItemStack consumeItem(Player player, CompassTypes type, ItemStack stack) {
     stack.setAmount(stack.getAmount() - 1);
-    plugin.datas.setConsumeCooldown(player, type);
+    sc.datas.cooldownConsumeSet(player, type);
 
     return stack;
   }
 
   public boolean hasRequiredItems(Player player, CompassTypes type, boolean consume) {
-    if (isExempted(player, type)) return true;
+    if (((MemorySection) sc.config.get("compass." + type + ".require.items")).getKeys(false).isEmpty()) return true;
 
-    List<?>         lores = plugin.config.getList("ignored_lores");
+    List<?>         lores = sc.config.getList("ignored_lores");
     PlayerInventory inv   = player.getInventory();
     ItemStack       stack;
 
     consume &= shouldConsume(player, type);
 
     for (RequirementsSections section : RequirementsSections.values()) {
-      List<?> items = plugin.config.getList("compass." + type + ".require.items." + section);
+      List<?> items = sc.config.getList("compass." + type + ".require.items." + section, new ArrayList<String>());
+
+      if (items.isEmpty()) continue;
 
       switch (section) {
         case OFF_HAND:
@@ -225,11 +227,6 @@ public class CompassManager {
     return false;
   }
 
-  public boolean isExempted(Player player, CompassTypes type) {
-    return player.hasPermission("scompass.use.free")
-        || ((MemorySection) plugin.config.get("compass." + type + ".require.items")).getKeys(false).isEmpty();
-  }
-
   public boolean isValidItem(ItemStack stack, List<?> requiredItems, List<?> ignoredLores) {
     if (!requiredItems.contains(stack.getType().toString())) return false;
     if (ignoredLores.isEmpty()) return true;
@@ -238,14 +235,16 @@ public class CompassManager {
 
     if (itemLores == null) return true;
 
-    for (Object lore : stack.getItemMeta().getLore()) if (ignoredLores.contains(lore)) return false;
+    for (Object lore : stack.getItemMeta().getLore())
+      if (ignoredLores.contains(lore)) return false;
 
     return true;
   }
 
   public boolean shouldConsume(Player player, CompassTypes type) {
-    return plugin.config.getBoolean("compass." + type + ".require.consume")
-        && plugin.datas.getConsumeCooldown(player, type) < 1;
+    return sc.config.getBoolean("compass." + type + ".require.consume")
+        && !player.hasPermission("scompass.use.free")
+        && sc.datas.cooldownConsumeGet(player, type) < 1;
   }
 
   // ----------------------------------------------------------------------------------------------
@@ -265,7 +264,7 @@ public class CompassManager {
 
     if (compass == null) return;
 
-    if (!isExempted(compass.owner, type)
+    if (!((MemorySection) sc.config.get("compass." + type + ".require.items")).getKeys(false).isEmpty()
         && shouldConsume(compass.owner, type) && !hasRequiredItems(compass.owner, type, true))
       removeCompass(type, compass.owner);
     else

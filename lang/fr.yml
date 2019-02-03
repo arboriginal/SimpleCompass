@@ -32,16 +32,20 @@ file_not_writable: "{prefix}&cImpossible d'écrire dans le fichier des données 
 
 # Quand une commande qui ne peut être exécutée que par un joueur est utilisée depuis la console
 command_only_for_players: "{prefix}&cCette commande ne peut être utilisée que par un joueur !"
+# Quand une commande est executée depuis un lit
+command_no_sleeping: "{prefix}&cCette commande ne peut être utilisée quand tu es dans un lit !"
 # Commande désactivée (par une permission) pour un joueur.
 command_no_access: "{prefix}&cTu n'as pas accès à cette commande !"
 # Quand un joueur utilise une commande avec de mauvais arguments
-wrong_usage: "{prefix}&cMauvais utilisation de la commande !"
+wrong_usage: "{prefix}&cMauvaise utilisation de la commande !"
 # Quand un joueur utilise des options invalides
 invalid_option: "{prefix}&6{option} &cest une option invalide !"
 # Quand un joueur utilise des types invalides
 invalid_type: "{prefix}&6{type} &cest un type invalide !"
 # Quand une commande est utilisée dans sa forme compacte mais est ambigue...
 missing_type: "{prefix}&6Tu dois préciser sur quel type appliquer cette option !"
+# Quand une commande est utilisée sans nom de cible
+missing_target: "{prefix}&6Tu dois préciser un nom valide !"
 # Cible déjà existante
 target_exists: "{prefix}&e{target} &cexiste déjà."
 # Cible inconnue pour la requête
@@ -58,12 +62,16 @@ interface_failed_auto_open_give: "{prefix}&eL'interface ne peut être ouverte au
 # Au cas où l'interface sous forme de livre ne peut être ouverte automatiquement et que le livre n'a pu être donné car inventaire plein
 interface_failed_auto_open_give_failed: "{prefix}&eL'interface ne peut être ouverte automatiquement... Et &c&ltu n'as pas la place pour recevoir le livre..."
 # Au cas où l'interface sous forme de livre ne peut être ouverte automatiquement et que le livre n'a pu être donné car le joueur doit attendre
-interface_book_give_cooldown: "{prefix}&cTu fois attendre {delay} secondes avant qu'un autre livre-interface soit disponible !"
+interface_book_give_cooldown: "{prefix}&cTu dois attendre {delay} avant qu'un autre livre-interface soit disponible !"
 
-# Noms des types de boussoles
-types:
-  ACTIONBAR: "Barre d'action"
-  BOSSBAR: "Barre de boss"
+# Tu peux définir tes propres noms d'action ici (choisis quelque chose de court et compréhensible pour les joueurs)
+actions:
+  ADD: ajouter
+  ASK: demander
+  DEL: supprimer
+  HELP: aide
+  START: commencer
+  STOP: stopper
 
 # Noms des modes de boussoles 
 modes:
@@ -78,14 +86,36 @@ options:
   ELYTRA_VEHICLE: "Elytres + véhicule"
   DISABLED: "Non"
 
+# Tu peux définir tes propres noms de sous-commandes ici (choisis quelque chose de court et compréhensible pour les joueurs)
+subcommands:
+  OPTION: option # Sous-commande pour accéder aux options depuis la commande /scompass
+  TRACK: piste   # Sous-commande pour accéder au tracking depuis la commande /scompass
+
+time_display:
+  hour: "h"
+  minute: "min"
+  second: "s"
+
+# Tu peux définir tes propres noms de trackers ici (choisis quelque chose de court et compréhensible pour les joueurs)
+trackers:
+  COORDS: coords
+  DEATH_POSITION: mort
+  PLAYER: joueur
+  POSITION: position
+
+# Noms des types de boussoles
+types:
+  ACTIONBAR: "Barre d'action"
+  BOSSBAR: "Barre de boss"
+
 commands:
   scompass:
     header: |-
       ------------------
          &9&lSimpleCompass&8
-    content: |-
       ------------------
-
+    content: |-
+      &8.
          &0&l{type}&r:
 
           {MODE180} {MODE360}
@@ -96,6 +126,65 @@ commands:
       inactive: " &7[&c{option}&7]"
       hover: "&6Clique pour choisir &a&l{option}&6\n&6pour &c&l{type}"
     saved: "{prefix}&aTes réglages ont été sauvegardés."
+    track:
+      per_page: 4
+      content: |-
+        &0&l☼ Pistage &c&l{tracker}
+         {buttons}
+      buttons: # (Tu peux ordonner les options de cette liste.)
+        ASK:
+          text: "&8[&3&l♪&8]"
+          hover: "&6Clique pour demander un pistage"
+        START:
+          text: "&8[&2&l⚑&8]"
+          hover: "&6Clique pour commencer un pistage"
+        STOP:
+          text: "&8[&4&l⚑&8]"
+          hover: "&6Clique pour arrêter un pistage"
+        ADD:
+          text: "&8[&2&l+&8]"
+          hover: "&6Clique pour ajouter un pistage"
+        DEL:
+          text: "&8[&4&l-&8]"
+          hover: "&6Clique pour supprimer un pistage"
+        HELP:
+          text: "&8[&6&l?&8]"
+          hover: "&6Clique pour afficher l'aide"
+    books:
+      options:
+        title: "Options boussole"
+        author: "{prefix}"
+        lore:
+        - "Change tes options:"
+        - "- mode de boussole"
+        - "- visibilitié de la boussole"
+      targets:
+        title: "Choix de la cible"
+        author: "{prefix}"
+        lore:
+        - "Choisit la cible"
+    targets:
+      per_page: 10
+      header: "&9&lChoisis la cible"
+      content: "- &6{target}"
+      no_targets: "&cAucune cible"
+      hover: "&7Choisir &6{target}"
+      prev:
+        title: "&4&l<<<"
+        hover: "Page précédente"
+      next:
+        title: "&4&l>>>"
+        hover: "Page suivante"
+      new:
+        cancel: "!no"
+        name_only: |
+          {prefix}&Saisir un nom de cible
+          &3(Tapes '{word}' pour annuler et retour au chat normal).
+        name_coords: |
+          {prefix}&bSaisis un nom de clible, suivi de x et z
+          &7Tu peux omettre x et z, tes coordonnées seront utilisées.
+          &3(Tapes '{word}' pour annuler et retour au chat normal). 
+        cancelled: "{prefix}&6Création de la cible annulée."
 
   scoption:
     header: |-
@@ -127,6 +216,14 @@ commands:
       START: "{prefix}&6Tu pistes maintenant les coordonnées &e{target}&6."
       STOP: "{prefix}&6Tu ne pistes plus les coordonnées &e{target}&6."
 
+    DEATH_POSITION:
+      list: "{prefix}&rDernière mort: {list}&r."
+      list_coord: "&6x: &c{x} &r/ &6z: &c{z}"
+      list_empty: "{prefix}&rPas de coordinées de mort."
+
+      START: "{prefix}&6Tu pistes maintenant &eta dernière mort&6."
+      STOP: "{prefix}&6Tu ne pistes plus &eta dernière mort&6."
+
     PLAYER:
       list: "{prefix}&rJoueurs pistés : {list}."
       list_empty: "{prefix}&rAucun joueur pisté."
@@ -157,6 +254,8 @@ commands:
         accepted:
           player: "{prefix}&e{target}&r a &aaccepté&r ta demande."
           target: "{prefix}&e{player}&r te pistes à présent..."
+          player_limit_reached: "{prefix}&e{target}&r a &aaccepté&r ta demande, mais tu ne peux pas pister d'autre joueurs."
+          target_limit_reached: "{prefix}&e{player}&r ne peux pas pister d'autre joueurs pour le moment et ne te pistes donc pas..."
         refused:
           player: "{prefix}&e{target}&r a &crefusé&r ta requête."
           target: "{prefix}&e{player}&r ne te pistes plus."
@@ -171,53 +270,68 @@ commands:
       STOP: "{prefix}&6Tu ne pistes plus la position &e{target}&6."
 
     help: # Voir tracker_settings pour les valeurs de substitution
-      header: "&e|  {prefix} &a&lAide"
+      header: "&e|  {prefix} &aAide pistage &l{tracker}"
       separator: "&e-----------------------------------------------------"
 
       COORDS:
         noargs: |
-          &r- &c/sctrack &e{COORDS}
+          &r- &c/{command} &e{COORDS}
           &7  Affiche la liste des coordonnées nommées.
         ADD: |
-          &r- &c/sctrack &e{COORDS} &6{ADD} &3<nom> &b<x> <z>
+          &r- &c/{command} &e{COORDS} &6{ADD} &3<nom> &b<x> <z>
           &7  Crée une coordonnée nommée.
         DEL: |
-          &r- &c/sctrack &e{COORDS} &6{DEL} &3<nom>
+          &r- &c/{command} &e{COORDS} &6{DEL} &3<nom>
           &7  Supprime une coordonnée nommée.
         START: |
-          &r- &c/sctrack &e{COORDS} &6{START} &3<nom>
+          &r- &c/{command} &e{COORDS} &6{START} &3<nom>
           &7  Démarre le pistage d'une coordonnée nommée.
         STOP: |
-          &r- &c/sctrack &e{COORDS} &6{STOP} &3<nom>
+          &r- &c/{command} &e{COORDS} &6{STOP} &3<nom>
           &7  Arrête le pistage d'une coordonnée nommée.
+
+      DEATH_POSITION:
+        noargs: |
+          &r- &c/{command} &e{DEATH_POSITION}
+          &7  Affiche les coordonnées de ta dernière mort.
+        START: |
+          &r- &c/{command} &e{DEATH_POSITION} &6{START}
+          &7  Démarre le pistage de ta dernière mort.
+        STOP: |
+          &r- &c/{command} &e{DEATH_POSITION} &6{STOP}
+          &7  Arrête le pistage de ta dernière mort.
 
       PLAYER:
         noargs: |
-          &r- &c/sctrack &e{PLAYER}
+          &r- &c/{command} &e{PLAYER}
           &7  Affiche la liste des joueurs que tu pistes.
         ASK: |
-          &r- &c/sctrack &e{PLAYER} &6{ASK} &3<nom>
+          &r- &c/{command} &e{PLAYER} &6{ASK} &3<nom>
           &7  Demande à un joueur de le pister.
         START: |
-          &r- &c/sctrack &e{PLAYER} &6{START} &3<nom>
+          &r- &c/{command} &e{PLAYER} &6{START} &3<nom>
           &7  Démarre le pistage d'un joueur (sans demande).
         STOP: |
-          &r- &c/sctrack &e{PLAYER} &6{STOP} &3<nom>
+          &r- &c/{command} &e{PLAYER} &6{STOP} &3<nom>
           &7  Arrête le pistage d'un joueur.
 
       POSITION:
         noargs: |
-          &r- &c/sctrack &e{POSITION}
+          &r- &c/{command} &e{POSITION}
           &7  Affiche la liste des positions nommées.
         ADD: |
-          &r- &c/sctrack &e{POSITION} &6{ADD} &3<nom> &b<x> <z>
+          &r- &c/{command} &e{POSITION} &6{ADD} &3<nom> &b<x> <z>
           &7  Crée une position nommée.
         DEL: |
-          &r- &c/sctrack &e{POSITION} &6{DEL} &3<nom>
+          &r- &c/{command} &e{POSITION} &6{DEL} &3<nom>
           &7  Supprime une position nommée.
         START: |
-          &r- &c/sctrack &e{POSITION} &6{START} &3<nom>
+          &r- &c/{command} &e{POSITION} &6{START} &3<nom>
           &7  Démarre le pistage d'une position nommée.
         STOP: |
-          &r- &c/sctrack &e{POSITION} &6{STOP} &3<nom>
+          &r- &c/{command} &e{POSITION} &6{STOP} &3<nom>
           &7  Arrête le pistage d'une position nommée.
+
+    limits:
+      ADD: "{prefix}&cTu as atteind la limite de {tracker}."
+      START: "{prefix}&cTu ne peux pas cibler plus de {limit} {tracker}."
