@@ -18,8 +18,8 @@ import me.arboriginal.SimpleCompass.commands.AbstractCommand.SubCmds;
 import me.arboriginal.SimpleCompass.compasses.AbstractCompass.CompassModes;
 import me.arboriginal.SimpleCompass.compasses.AbstractCompass.CompassTypes;
 import me.arboriginal.SimpleCompass.managers.CompassManager.RequirementsSections;
+import me.arboriginal.SimpleCompass.plugin.AbstractTracker.TrackingActions;
 import me.arboriginal.SimpleCompass.plugin.SimpleCompass;
-import me.arboriginal.SimpleCompass.trackers.AbstractTracker.TrackingActions;
 
 public class ConfigUtil {
   private List<ConfigError> errors;
@@ -43,7 +43,6 @@ public class ConfigUtil {
     List<String> modified = new ArrayList<String>();
 
     modified.addAll(validateCustomNames(TrackingActions.values(), "actions"));
-    modified.addAll(validateCustomNames(sc.trackers.keySet().toArray(), "trackers"));
     modified.addAll(validateCustomNames(SubCmds.values(), "subcommands"));
 
     if (!modified.isEmpty())
@@ -223,15 +222,21 @@ public class ConfigUtil {
   }
 
   private void validateTrackerSettings() {
-    List<String> priorities = new ArrayList<String>();
+    List<String> userPriorities = sc.config.getStringList("trackers_priorities");
+    List<String> readPriorities = new ArrayList<String>();
 
-    for (String priority : sc.config.getStringList("tracker_settings.priority"))
-      if (!priorities.contains(priority)) priorities.add(priority);
+    for (String priority : sc.config.getStringList("trackers_priorities")) { // @formatter:off
+      if (!sc.trackers.containsKey(priority)) userPriorities.remove(priority);
+      else if (!readPriorities.contains(priority)) readPriorities.add(priority);
+    } // @formatter:on
 
-    if (priorities.size() != sc.trackers.size()) {
-      fixValue("tracker_settings.priority");
+    if (readPriorities.size() != sc.trackers.size()) {
+      fixValue("trackers_priorities");
       addError("invalid_priorities");
     }
+
+    for (String tracker : sc.trackers.keySet()) if (!userPriorities.contains(tracker)) userPriorities.add(tracker);
+    fixValue("trackers_priorities", userPriorities);
   }
 
   // ----------------------------------------------------------------------------------------------

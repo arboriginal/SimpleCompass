@@ -1,6 +1,6 @@
 name: SimpleCompass
 description: Simple compass to help player who don't have sense of direction.
-version: 0.6
+version: 0.7
 
 author: arboriginal
 website: https://www.spigotmc.org/resources/simplecompass.63140/
@@ -37,18 +37,6 @@ commands:
     # Also require scompass.use.ACTIONBAR or scompass.use.BOSSBAR or both, and at least an option
     usage: /<command> <tracker> <action> <target> [<x> <z>]
     aliases: sctrack
-
-  scompass-track-accept: # Only available if tracker PlayerTracker is active
-    description: Accept a tracking request
-    permission: scompass.track.accept
-    usage: /<command> <player>
-    aliases: sctaccept
-
-  scompass-track-deny: # Only available if tracker PlayerTracker is active
-    description: Deny a tracking request
-    permission: scompass.track.accept
-    usage: /<command> <player>
-    aliases: sctdeny
 
 permissions:
   scompass.reload:
@@ -136,88 +124,12 @@ permissions:
     description: Allows to use the option "Disabled".
     default: true
 
-  scompass.track.*: # Require scompass.use
-    description: Allows to use all the trackers.
-    default: op
-    children:
-      scompass.track: true
-      scompass.track.accept: true
-      scompass.track.COORDS: true
-      scompass.track.DEATH_POSITION: true
-      scompass.track.PLAYER.*: true
-      scompass.track.POSITION.*: true
-
   scompass.track: # Require scompass.use
     description: Allows the use of scompass-track command.
-    default: false
-
-#################################################
-# Permission relative to tracker CoordsTracker
-#################################################
-
-  scompass.track.COORDS: # Require scompass.track
-    description: Allows to use the tracker with given coords.
-    default: false
-
-#################################################
-# Permission relative to tracker DeathPosTracker
-#################################################
-
-  scompass.track.DEATH_POSITION: # Require scompass.track
-    description: Allows to use the tracker to the last death location.
     default: true
 
-#################################################
-# Permission relative to tracker PlayerTracker
-#################################################
-
-  scompass.track.accept:
-    description: Allows to accept tracking request.
-    default: true
-
-  scompass.track.PLAYER.*: # Require scompass.track
-    description: Allows to use the tracker on players.
-    default: op
-    children:
-      scompass.track.PLAYER: true
-      scompass.track.PLAYER.request: true
-      scompass.track.PLAYER.silently: true
-
-  scompass.track.PLAYER: # Require scompass.track
-    description: Allows to use the tracker on players.
+  scompass.track.*: # Require scompass.use
+    description: Allows the use of all installed trackers.
     default: false
-
-  scompass.track.PLAYER.request: # Require scompass.track.player
-    description: Allows to use the tracker on players, with their agreement.
-    default: true
-
-  scompass.track.PLAYER.silently: # Require scompass.track.player
-    description: Allows to use the tracker on players, without asking.
-    default: true
-
-#################################################
-# Permission relative to tracker PositionTracker
-#################################################
-
-# All named positions in config.yml use a dynamic permission: scompass.track.POSITION.defined.<name>
-# This permission can be omitted if you give the permission scompass.track.POSITION.defined.* to your players
-
-  scompass.track.POSITION.*: # Require scompass.track
-    description: Allows to use the tracker with defined positions and manage them.
-    default: op
-    children:
-      scompass.track.POSITION: true
-      scompass.track.POSITION.defined.*: true
-      scompass.track.POSITION.manage: true
-
-  scompass.track.POSITION: # Require scompass.track
-    description: Allows to use the tracker with defined positions.
-    default: true
-
-  scompass.track.POSITION.defined.*: # Require scompass.track
-    description: Allows to use track all defined positions.
-    default: false
-
-  scompass.track.POSITION.manage: # Require scompass.track
-    description: Allows to manage defined positions.
-    default: false
+    # Note: To give the permission to use the tracker "foo", give permission "scompass.track.foo"
+    # see trackers addon's README.md files on their github pages for more info.

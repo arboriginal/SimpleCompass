@@ -10,6 +10,8 @@ prefix: "&8[&eSimpleCompass&8] "  # Mais tu peux aussi le décider de retirer la
 
 # Message affiché quand la commande reload est utilisée
 configuration_reloaded: "{prefix}&aConfiguration rechargée"
+# Message affiché quand la commande reload est utilisée et qu'un tracker ne s'initialise pas correctement
+tracker_disabled: "{prefix}&cLe tracker {tracker} n'a pas pu être rechargé, il a été désactivé."
 
 # Choix invalide dans le fichier de config pour les réglages par défaut des boussoles.
 invalid_choice: "{prefix}&cChoix par défaut invalide pour {type} ({key}), utilisation de ceux par défaut"
@@ -21,8 +23,8 @@ invalid_bossbar_style: "{prefix}&cStyle de barre de boss invalide, utilisation d
 invalid_bossbar_color_level: "{prefix}&cCouleur de barre de boss invalide dans les niveaux liés aux élytres."
 # Erreur dans le fichier de config pour les prérequis d'une boussole 
 invalid_items: "{prefix}&cItems invalides trouvés dans les prérequis de {section} ({type}), &6&l{ignored}&c ont été ignorés..."
-# Erreur dans le fichier de config pour "tracker_settings"
-invalid_names: "{prefix}&cNoms invalides trouvés dans tracker_settings, modifié : {modified}."
+# Erreur dans le fichier de langue pour les noms d'actions et de subcommands
+invalid_names: "{prefix}&cNoms invalides trouvés dans le fichier de langue, modifiés : {modified}."
 # Message d'information pour les points cardinaux s'ils n'ont pas la même longueur, voir "filling_char" pour plus de détails
 cardinal_length: "{prefix}&eTon point cardinal {cardinal} ({key}) a été ajusté pour correspondre à la longueur des autres"
 # Si tu as fait une erreur dans la liste de priorité des trackers
@@ -50,8 +52,6 @@ missing_target: "{prefix}&6Tu dois préciser un nom valide !"
 target_exists: "{prefix}&e{target} &cexiste déjà."
 # Cible inconnue pour la requête
 target_not_found: "{prefix}&e{target} &cest introuvable !"
-# Quand un joueur tente d'accepter / refuser une requête expirée
-request_expired: "{prefix}&cPas de requête en cours pour &e{player}&c."
 
 # Affiché dans les boussoles quand le joueur n'a plus les items nécessaires pour l'utiliser
 warnPlayerNoMoreFuel: "&cTu n'as plus les items requis..."
@@ -66,9 +66,11 @@ interface_book_give_cooldown: "{prefix}&cTu dois attendre {delay} avant qu'un au
 
 # Tu peux définir tes propres noms d'action ici (choisis quelque chose de court et compréhensible pour les joueurs)
 actions:
+  ACCEPT: accepter
   ADD: ajouter
   ASK: demander
   DEL: supprimer
+  DENY: refuser
   HELP: aide
   START: commencer
   STOP: stopper
@@ -95,13 +97,6 @@ time_display:
   hour: "h"
   minute: "min"
   second: "s"
-
-# Tu peux définir tes propres noms de trackers ici (choisis quelque chose de court et compréhensible pour les joueurs)
-trackers:
-  COORDS: coords
-  DEATH_POSITION: mort
-  PLAYER: joueur
-  POSITION: position
 
 # Noms des types de boussoles
 types:
@@ -207,130 +202,9 @@ commands:
       &8.
 
   sctrack:
-    COORDS:
-      list: "{prefix}&rCoordonnées nommées : {list}."
-      list_empty: "{prefix}&rAucunes coordonnées nommées."
-
-      ADD: "{prefix}&aLes coordonnées &e{target}&a ont été créées."
-      DEL: "{prefix}&aLes coordonnées &e{target}&a ont été supprimée."
-      START: "{prefix}&6Tu pistes maintenant les coordonnées &e{target}&6."
-      STOP: "{prefix}&6Tu ne pistes plus les coordonnées &e{target}&6."
-
-    DEATH_POSITION:
-      list: "{prefix}&rDernière mort: {list}&r."
-      list_coord: "&6x: &c{x} &r/ &6z: &c{z}"
-      list_empty: "{prefix}&rPas de coordinées de mort."
-
-      START: "{prefix}&6Tu pistes maintenant &eta dernière mort&6."
-      STOP: "{prefix}&6Tu ne pistes plus &eta dernière mort&6."
-
-    PLAYER:
-      list: "{prefix}&rJoueurs pistés : {list}."
-      list_empty: "{prefix}&rAucun joueur pisté."
-
-      ASK: "{prefix}&rDemande pistage envoyée à {target}."
-      START: "{prefix}&6Tu pistes maintenant &e{target}&6."
-      STOP: "{prefix}&6Tu ne pistes plus &e{target}&6."
-
-      request:
-        message: |
-          {prefix}&8--------------------------------------
-          &8|
-          &8|                 &e{player} &7veut te pister.
-          &8|
-          &8|                   &8[ {deny} &8] &f/&8 [ {accept} &8] &f?
-          &8|
-          &8----------------------------------------------------
-        accept: "&a&lACCEPTER"
-        accept_hover: |
-          Clique pour &e&laccepter
-          &7 -- ou tape --
-          &c/sctaccept {player}
-        deny: "&c&lREFUSER"
-        deny_hover: |
-          Clique pour &e&lrefuser
-          &7 -- ou tape --
-          &c/sctdeny {player}
-        accepted:
-          player: "{prefix}&e{target}&r a &aaccepté&r ta demande."
-          target: "{prefix}&e{player}&r te pistes à présent..."
-          player_limit_reached: "{prefix}&e{target}&r a &aaccepté&r ta demande, mais tu ne peux pas pister d'autre joueurs."
-          target_limit_reached: "{prefix}&e{player}&r ne peux pas pister d'autre joueurs pour le moment et ne te pistes donc pas..."
-        refused:
-          player: "{prefix}&e{target}&r a &crefusé&r ta requête."
-          target: "{prefix}&e{player}&r ne te pistes plus."
-
-    POSITION:
-      list: "{prefix}&rPositions nommées : {list}."
-      list_empty: "{prefix}&rAucune position nommée."
-
-      ADD: "{prefix}&aLa position &e{target}&a a été créée."
-      DEL: "{prefix}&aLa position &e{target}&a a été supprimée."
-      START: "{prefix}&6Tu pistes maintenant la position &e{target}&6."
-      STOP: "{prefix}&6Tu ne pistes plus la position &e{target}&6."
-
-    help: # Voir tracker_settings pour les valeurs de substitution
+    help:
       header: "&e|  {prefix} &aAide pistage &l{tracker}"
       separator: "&e-----------------------------------------------------"
-
-      COORDS:
-        noargs: |
-          &r- &c/{command} &e{COORDS}
-          &7  Affiche la liste des coordonnées nommées.
-        ADD: |
-          &r- &c/{command} &e{COORDS} &6{ADD} &3<nom> &b<x> <z>
-          &7  Crée une coordonnée nommée.
-        DEL: |
-          &r- &c/{command} &e{COORDS} &6{DEL} &3<nom>
-          &7  Supprime une coordonnée nommée.
-        START: |
-          &r- &c/{command} &e{COORDS} &6{START} &3<nom>
-          &7  Démarre le pistage d'une coordonnée nommée.
-        STOP: |
-          &r- &c/{command} &e{COORDS} &6{STOP} &3<nom>
-          &7  Arrête le pistage d'une coordonnée nommée.
-
-      DEATH_POSITION:
-        noargs: |
-          &r- &c/{command} &e{DEATH_POSITION}
-          &7  Affiche les coordonnées de ta dernière mort.
-        START: |
-          &r- &c/{command} &e{DEATH_POSITION} &6{START}
-          &7  Démarre le pistage de ta dernière mort.
-        STOP: |
-          &r- &c/{command} &e{DEATH_POSITION} &6{STOP}
-          &7  Arrête le pistage de ta dernière mort.
-
-      PLAYER:
-        noargs: |
-          &r- &c/{command} &e{PLAYER}
-          &7  Affiche la liste des joueurs que tu pistes.
-        ASK: |
-          &r- &c/{command} &e{PLAYER} &6{ASK} &3<nom>
-          &7  Demande à un joueur de le pister.
-        START: |
-          &r- &c/{command} &e{PLAYER} &6{START} &3<nom>
-          &7  Démarre le pistage d'un joueur (sans demande).
-        STOP: |
-          &r- &c/{command} &e{PLAYER} &6{STOP} &3<nom>
-          &7  Arrête le pistage d'un joueur.
-
-      POSITION:
-        noargs: |
-          &r- &c/{command} &e{POSITION}
-          &7  Affiche la liste des positions nommées.
-        ADD: |
-          &r- &c/{command} &e{POSITION} &6{ADD} &3<nom> &b<x> <z>
-          &7  Crée une position nommée.
-        DEL: |
-          &r- &c/{command} &e{POSITION} &6{DEL} &3<nom>
-          &7  Supprime une position nommée.
-        START: |
-          &r- &c/{command} &e{POSITION} &6{START} &3<nom>
-          &7  Démarre le pistage d'une position nommée.
-        STOP: |
-          &r- &c/{command} &e{POSITION} &6{STOP} &3<nom>
-          &7  Arrête le pistage d'une position nommée.
 
     limits:
       ADD: "{prefix}&cTu as atteind la limite de {tracker}."

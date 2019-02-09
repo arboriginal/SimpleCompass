@@ -20,12 +20,29 @@ public class LangUtil {
   public LangUtil(SimpleCompass plugin) {
     sc = plugin;
   }
+  
+  // ----------------------------------------------------------------------------------------------
+  // Public static methods
+  // ----------------------------------------------------------------------------------------------
 
+  public static void writeResourceToFile(InputStream in, File file) throws Exception {
+    file.getParentFile().mkdirs();
+
+    OutputStream out = new FileOutputStream(file);
+    byte[]       buf = new byte[1024];
+    int          len;
+
+    while ((len = in.read(buf)) > 0) out.write(buf, 0, len);
+
+    out.close();
+    in.close();
+  }
+  
   // ----------------------------------------------------------------------------------------------
   // Public methods
   // ----------------------------------------------------------------------------------------------
 
-  public FileConfiguration get(String language) {
+  public FileConfiguration getLocale(String language) {
     FileConfiguration locale;
     boolean           newFile;
 
@@ -98,16 +115,6 @@ public class LangUtil {
   }
 
   private void writeResourceToFile(String resource, File file) throws Exception {
-    file.getParentFile().mkdirs();
-
-    InputStream  in  = sc.getResource(resource);
-    OutputStream out = new FileOutputStream(file);
-    byte[]       buf = new byte[1024];
-    int          len;
-
-    while ((len = in.read(buf)) > 0) out.write(buf, 0, len);
-
-    out.close();
-    in.close();
+    writeResourceToFile(sc.getResource(resource), file);
   }
 }

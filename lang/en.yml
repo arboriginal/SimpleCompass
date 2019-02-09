@@ -10,6 +10,8 @@ prefix: "&8[&eSimpleCompass&8] "  # But you can also decide to remove the {prefi
 
 # Message displayed when using the reload command
 configuration_reloaded: "{prefix}&aConfiguration successfully reloaded"
+# Message displayed when using the reload command and a tracker can't init correctly
+tracker_disabled: "{prefix}&cTracker {tracker} can't be reloaded, it has been disabled."
 
 # Invalid choice in the config file for compasses default settings.
 invalid_choice: "{prefix}&cInvalid default choice for {type} ({key}), using default"
@@ -21,8 +23,8 @@ invalid_bossbar_style: "{prefix}&cInvalid bossbar style, using default"
 invalid_bossbar_color_level: "{prefix}&cInvalid bossbar color found in elytra levels."
 # Mistake in config file for compass requirements
 invalid_items: "{prefix}&cFound invalid items in {section} ({type}) requirement list, &6&l{ignored}&c has been ignored..."
-# Mistake in config file for "tracker_settings"
-invalid_names: "{prefix}&cFound invalid names in tracker_settings, modified: {modified}."
+# Mistake in language file for actions and subcommands names
+invalid_names: "{prefix}&cFound invalid names in your locale file, modified: {modified}."
 # Information message for cardinals if they have not same length, see "filling_char" for more details
 cardinal_length: "{prefix}&eYour cardinal {cardinal} ({key}) has been adjusted to fit the max length of others"
 # If you commit an error in trackers priorities list
@@ -50,8 +52,6 @@ missing_target: "{prefix}&6You must specify a valid target name!"
 target_exists: "{prefix}&e{target} &calready exists."
 # Unknown target for request
 target_not_found: "{prefix}&e{target} &ccannot be found!"
-# When a player try to accept / deny an expired request
-request_expired: "{prefix}&cNo pending request from &e{player}&c."
 
 # Displayed in compasses when the player no more have required items to use the compass
 warnPlayerNoMoreFuel: "&cYou no longer have the necessary items..."
@@ -66,9 +66,11 @@ interface_book_give_cooldown: "{prefix}&cYou have to wait {delay} before another
 
 # You can define your own action names here (choose something short and understandable by your players)
 actions:
+  ACCEPT: accept
   ADD: add
   ASK: ask
   DEL: del
+  DENY: deny
   HELP: help
   START: start
   STOP: stop
@@ -95,13 +97,6 @@ time_display:
   hour: "h"
   minute: "min"
   second: "s"
-
-# You can define your own tracker names here (choose something short and understandable by your players)
-trackers:
-  COORDS: coords
-  DEATH_POSITION: death
-  PLAYER: player
-  POSITION: position
 
 # Human name for the compass types
 types:
@@ -207,130 +202,9 @@ commands:
       &8.
 
   sctrack:
-    COORDS:
-      list: "{prefix}&rNamed coordinates: {list}."
-      list_empty: "{prefix}&rNo named coordinates."
-
-      ADD: "{prefix}&aNamed coordinate &e{target}&a has been created."
-      DEL: "{prefix}&aNamed coordinate &e{target}&a has been deleted."
-      START: "{prefix}&6You are now tracking &e{target}&6 coordinate."
-      STOP: "{prefix}&6You no longer track &e{target}&6 coordinate."
-
-    DEATH_POSITION:
-      list: "{prefix}&rDeath coordinates: {list}&r."
-      list_coord: "&6x: &c{x} &r/ &6z: &c{z}"
-      list_empty: "{prefix}&rNo death coordinates."
-
-      START: "{prefix}&6You are now tracking your &elast death&6 position."
-      STOP: "{prefix}&6You no longer track your &elast death&6 position."
-
-    PLAYER:
-      list: "{prefix}&rTracked players: {list}."
-      list_empty: "{prefix}&rNo player tracked."
-
-      ASK: "{prefix}&rTracking request sent to {target}."
-      START: "{prefix}&6You are now tracking &e{target}&6."
-      STOP: "{prefix}&6You no longer track &e{target}&6."
-
-      request:
-        message: |
-          {prefix}&8--------------------------------------
-          &8|
-          &8|                 &e{player} &7want to track you.
-          &8|
-          &8|                   &8[ {deny} &8] &f/&8 [ {accept} &8] &f?
-          &8|
-          &8----------------------------------------------------
-        accept: "&a&lACCEPT"
-        accept_hover: |
-          Click to &e&laccept
-          &7 -- or type --
-          &c/sctaccept {player}
-        deny: "&c&lDENY"
-        deny_hover: |
-          Click to &e&ldeny
-          &7 -- or type --
-          &c/sctdeny {player}
-        accepted:
-          player: "{prefix}&e{target}&r has &aaccepted&r your request."
-          target: "{prefix}&e{player}&r is now tracking you..."
-          player_limit_reached: "{prefix}&e{target}&r has &aaccepted&r your request, but you cannot track more players."
-          target_limit_reached: "{prefix}&e{player}&r cannot track more players and is NOT tracking you for now..."
-        refused:
-          player: "{prefix}&e{target}&r has &crefused&r your request."
-          target: "{prefix}&e{player}&r will not track you."
-
-    POSITION:
-      list: "{prefix}&rNamed positions: {list}."
-      list_empty: "{prefix}&rNo named positions."
-
-      ADD: "{prefix}&aNamed position &e{target}&a has been created."
-      DEL: "{prefix}&aNamed position &e{target}&a has been deleted."
-      START: "{prefix}&6You are now tracking &e{target}&6 position."
-      STOP: "{prefix}&6You no longer track &e{target}&6 position."
-
-    help: # See tracker_settings for values substitutions
+    help:
       header: "&e|  {prefix} &aHelp &l{tracker} &atracking"
       separator: "&e-----------------------------------------------------"
-
-      COORDS:
-        noargs: |
-          &r- &c/{command} &e{COORDS}
-          &7  Show the list of your named coordinates.
-        ADD: |
-          &r- &c/{command} &e{COORDS} &6{ADD} &3<name> &b<x> <z>
-          &7  Add a new named coordinate.
-        DEL: |
-          &r- &c/{command} &e{COORDS} &6{DEL} &3<name>
-          &7  Delete a named coordinate.
-        START: |
-          &r- &c/{command} &e{COORDS} &6{START} &3<name>
-          &7  Begin the tracking of this named coordinate.
-        STOP: |
-          &r- &c/{command} &e{COORDS} &6{STOP} &3<name>
-          &7  End the tracking of this named coordinate.
-
-      DEATH_POSITION:
-        noargs: |
-          &r- &c/{command} &e{DEATH_POSITION}
-          &7  Show your last death coordinates.
-        START: |
-          &r- &c/{command} &e{DEATH_POSITION} &6{START}
-          &7  Begin the tracking of your last death coordinate.
-        STOP: |
-          &r- &c/{command} &e{DEATH_POSITION} &6{STOP}
-          &7  End the tracking of your last death coordinate.
-
-      PLAYER:
-        noargs: |
-          &r- &c/{command} &e{PLAYER}
-          &7  Show list of players you are currently tracking.
-        ASK: |
-          &r- &c/{command} &e{PLAYER} &6{ASK} &3<name>
-          &7  Ask to a player to track his position.
-        START: |
-          &r- &c/{command} &e{PLAYER} &6{START} &3<name>
-          &7  Begin the tracking of this player (without asking).
-        STOP: |
-          &r- &c/{command} &e{PLAYER} &6{STOP} &3<name>
-          &7  End the tracking of this player.
-
-      POSITION:
-        noargs: |
-          &r- &c/{command} &e{POSITION}
-          &7  Show list of trackable positions.
-        ADD: |
-          &r- &c/{command} &e{POSITION} &6{ADD} &3<name> &b<x> <z>
-          &7  Create a new trackable position.
-        DEL: |
-          &r- &c/{command} &e{POSITION} &6{DEL} &3<name>
-          &7  Remove this trackable position.
-        START: |
-          &r- &c/{command} &e{POSITION} &6{START} &3<name>
-          &7  Begin the tracking of this named position.
-        STOP: |
-          &r- &c/{command} &e{POSITION} &6{STOP} &3<name>
-          &7  End the tracking of this named position.
 
     limits:
       ADD: "{prefix}&cYou have reached the limit of {tracker}."

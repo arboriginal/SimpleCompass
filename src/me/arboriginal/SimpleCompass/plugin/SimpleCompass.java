@@ -1,8 +1,14 @@
 package me.arboriginal.SimpleCompass.plugin;
 
+import java.io.File;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 import org.apache.commons.lang.time.DurationFormatUtils;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
@@ -10,7 +16,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
-import com.google.common.reflect.ClassPath;
+import com.google.common.collect.ImmutableMap;
 import me.arboriginal.SimpleCompass.commands.InterfaceCommand;
 import me.arboriginal.SimpleCompass.commands.OptionCommand;
 import me.arboriginal.SimpleCompass.commands.TrackCommand;
@@ -18,7 +24,6 @@ import me.arboriginal.SimpleCompass.managers.CompassManager;
 import me.arboriginal.SimpleCompass.managers.DataManager;
 import me.arboriginal.SimpleCompass.managers.TargetManager;
 import me.arboriginal.SimpleCompass.managers.TaskManager;
-import me.arboriginal.SimpleCompass.trackers.AbstractTracker;
 import me.arboriginal.SimpleCompass.utils.CacheUtil;
 import me.arboriginal.SimpleCompass.utils.ConfigUtil;
 import me.arboriginal.SimpleCompass.utils.LangUtil;
@@ -95,7 +100,7 @@ public class SimpleCompass extends JavaPlugin implements TabCompleter {
     isReady = false;
     config  = getConfig();
     config.options().copyDefaults(true);
-    locale = new LangUtil(this).get(config.getString("language"));
+    locale = new LangUtil(this).getLocale(config.getString("language"));
 
     for (ConfigUtil.ConfigError error : new ConfigUtil(this).validate(config))
       getLogger().warning(prepareMessage(error.errorKey, error.placeholders));
@@ -123,8 +128,15 @@ public class SimpleCompass extends JavaPlugin implements TabCompleter {
   public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
     if (command.getName().toLowerCase().equals("scompass-reload")) {
       reloadConfig();
+      
+      for (String tracker : trackers.keySet()) {
+        if (!trackers.get(tracker).init()) {
+          trackers.remove(tracker);
+          sendMessage(sender, "tracker_disabled", ImmutableMap.of("tracker", tracker));
+        }
+      }
+      
       sendMessage(sender, "configuration_reloaded");
-
       return true;
     }
 
@@ -228,33 +240,62 @@ public class SimpleCompass extends JavaPlugin implements TabCompleter {
   // ----------------------------------------------------------------------------------------------
 
   private void loadTrackers() {
+    File dir = new File(getDataFolder(), "trackers");
+    if (!dir.exists()) dir.mkdirs();
+
+    if (!dir.exists() || !dir.isDirectory()) {
+      getLogger().severe("Unable to create trackers folder...");
+      return;
+    }
+
     trackers = new HashMap<String, AbstractTracker>();
+    for (final File file : dir.listFiles()) {
+      if (file.isDirectory() || !file.getName().endsWith(".jar")) continue;
 
-    try {
-      for (ClassPath.ClassInfo classInfo : ClassPath.from(getClassLoader())
-          .getTopLevelClasses(AbstractTracker.class.getPackage().getName())) {
-        if (classInfo.getSimpleName().equals("AbstractTracker")) continue;
+      try {
+        String         path   = file.getAbsolutePath();
+        JarFile        jar    = new JarFile(path);
+        URLClassLoader loader = new URLClassLoader(
+            new URL[] { new URL("jar:file://" + path + "!/") },
+            getClassLoader());
 
-        Object tracker = Class.forName(classInfo.getName()).getConstructor(this.getClass()).newInstance(this);
+        Enumeration<JarEntry> entries = jar.entries();
+        while (entries.hasMoreElements()) {
+          JarEntry entry = entries.nextElement();
+          if (entry.isDirectory() || !entry.getName().endsWith(".class")) continue;
 
-        if (tracker instanceof AbstractTracker) {
+          String className = entry.getName().substring(0, entry.getName().length() - 6).replace('/', '.');
+          Object tracker   = null;
+
+          try {
+            tracker = Class.forName(className, true, loader).getConstructor(this.getClass()).newInstance(this);
+          }
+          catch (NoClassDefFoundError e) {}
+
+          if (tracker == null || !(tracker instanceof AbstractTracker)) continue;
           String trackerID = ((AbstractTracker) tracker).trackerID();
 
           if (trackers.containsKey(trackerID)) {
             getLogger().warning(
                 "Tracker {tracker} is using the ID {id} which is already used by {other}, can't load it..."
-                    .replace("{tracker}", classInfo.getSimpleName()).replace("id", trackerID)
+                    .replace("{tracker}", file.getName()).replace("id", trackerID)
                     .replace("{other}", trackers.get(trackerID).getClass().getSimpleName()));
             continue;
           }
 
-          trackers.put(trackerID, (AbstractTracker) tracker);
-          getLogger().info("Tracker {tracker} successfully loaded".replace("{tracker}", classInfo.getSimpleName()));
+          if (((AbstractTracker) tracker).init()) {
+            trackers.put(trackerID, (AbstractTracker) tracker);
+            getLogger().info("Tracker §6{tracker}§r successfully loaded".replace("{tracker}", file.getName()));
+          }
+          else
+            throw new Exception();
         }
+
+        jar.close();
       }
-    }
-    catch (Exception e) {
-      getLogger().severe("Error loading trackers...");
+      catch (Exception e) {
+        getLogger().severe("Error loading tracker " + file.getName() + "...");
+      }
     }
   }
 }

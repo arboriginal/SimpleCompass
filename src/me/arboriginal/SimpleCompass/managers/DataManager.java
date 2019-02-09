@@ -117,7 +117,7 @@ public class DataManager {
     String key = compassOptionKey(player, type);
 
     return CompassOptions.valueOf(users.contains(key) ? users.getString(key)
-        : sc.config.getDefaults().getString("compass." + type + ".default.option"));
+        : sc.config.getString("compass." + type + ".default.option"));
   }
 
   public String compassOptionKey(Player player, CompassTypes type) {

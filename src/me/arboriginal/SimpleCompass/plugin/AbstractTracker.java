@@ -1,24 +1,33 @@
-package me.arboriginal.SimpleCompass.trackers;
+package me.arboriginal.SimpleCompass.plugin;
 
+import java.io.File;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.bukkit.configuration.MemorySection;
+import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import com.google.common.collect.ImmutableMap;
-import me.arboriginal.SimpleCompass.plugin.SimpleCompass;
+import me.arboriginal.SimpleCompass.utils.LangUtil;
 
 public abstract class AbstractTracker {
-  SimpleCompass sc;
+  protected SimpleCompass sc;
+  protected File          sf;
 
   public enum TrackingActions {
-    ADD, ASK, DEL, HELP, START, STOP,
+    ADD, ACCEPT, ASK, DEL, DENY, HELP, START, STOP,
   }
-  
+
   public enum TargetSelector {
     ACTIVE, AVAILABLE, NEW, NEWCOORDS, NONE,
   }
+
+  public FileConfiguration settings;
 
   // ----------------------------------------------------------------------------------------------
   // Constructor methods
@@ -26,12 +35,67 @@ public abstract class AbstractTracker {
 
   public AbstractTracker(SimpleCompass plugin) {
     sc = plugin;
+    sf = new File(sc.getDataFolder(), "trackers/" + getClass().getSimpleName() + ".yml");
+  }
+
+  // ----------------------------------------------------------------------------------------------
+  // Initialization methods
+  // ----------------------------------------------------------------------------------------------
+
+  public boolean init() {
+    if (!sf.exists()) {
+      URL res = getClass().getResource("/settings.yml");
+      if (res == null) return false;
+
+      try {
+        LangUtil.writeResourceToFile(res.openStream(), sf);
+      }
+      catch (Exception e) {
+        return false;
+      }
+    }
+
+    settings = YamlConfiguration.loadConfiguration(sf);
+    return true;
+  }
+
+  // ----------------------------------------------------------------------------------------------
+  // Utils methods
+  // ----------------------------------------------------------------------------------------------
+
+  public void sendMessage(Player player, String key) {
+    sendMessage(player, key, null);
+  }
+
+  public void sendMessage(Player player, String key, Map<String, String> placeholders) {
+    if (key.isEmpty()) return;
+    String message = prepareMessage(key, placeholders);
+    if (!message.isEmpty()) player.sendMessage(message);
+  }
+
+  public String prepareMessage(String key) {
+    return prepareMessage(key, null);
+  }
+
+  public String prepareMessage(String key, Map<String, String> placeholders) {
+    String message = settings.getString("locales." + sc.config.getString("language") + "." + key);
+    if (message == null) message = sc.locale.getString(key);
+    if (message == null) return "";
+
+    if (placeholders != null) {
+      for (Iterator<String> i = placeholders.keySet().iterator(); i.hasNext();) {
+        String placeholder = i.next();
+        message = message.replace("{" + placeholder + "}", placeholders.get(placeholder));
+      }
+    }
+
+    return sc.formatMessage(message.replace("{prefix}", sc.locale.getString("prefix")));
   }
 
   // ----------------------------------------------------------------------------------------------
   // Actions methods
   // ----------------------------------------------------------------------------------------------
-  
+
   public TrackingActions getActionByName(String name) {
     for (TrackingActions action : TrackingActions.values())
       if (name.equalsIgnoreCase(getActionName(action))) return action;
@@ -45,16 +109,13 @@ public abstract class AbstractTracker {
 
   public List<TrackingActions> getActionsAvailable(Player player, boolean keepUnavailable) {
     List<TrackingActions> list = new ArrayList<TrackingActions>();
-
     if (player.hasPermission("scompass.help")) list.add(TrackingActions.HELP);
-
     return list;
   }
 
   public boolean limitReached(Player player, TrackingActions action, boolean showError, Integer current) {
-    if (!sc.config.contains("tracker_settings.trackers." + trackerID() + ".limits." + action)) return false;
-
-    int limit = sc.config.getInt("tracker_settings.trackers." + trackerID() + ".limits." + action), count;
+    if (!settings.contains("settings.limits." + action)) return false;
+    int limit = settings.getInt("settings.limits." + action), count;
 
     if (current == null) {
       UUID uid = player.getUniqueId();
@@ -68,7 +129,7 @@ public abstract class AbstractTracker {
 
     if (count < limit) return false;
 
-    if (showError) sc.sendMessage(player, "commands.sctrack.limits." + action,
+    if (showError) sendMessage(player, "commands.sctrack.limits." + action,
         ImmutableMap.of("limit", "" + limit, "tracker", trackerName()));
 
     return true;
@@ -78,20 +139,20 @@ public abstract class AbstractTracker {
     switch (action) {
       case ADD:
         return TargetSelector.NEW;
-        
+
       case ASK:
       case DEL:
       case START:
         return TargetSelector.AVAILABLE;
-        
+
       case STOP:
         return TargetSelector.ACTIVE;
-        
-      default: 
+
+      default:
         return TargetSelector.NONE;
     }
   }
-  
+
   // ----------------------------------------------------------------------------------------------
   // Tracker methods
   // ----------------------------------------------------------------------------------------------
@@ -99,7 +160,7 @@ public abstract class AbstractTracker {
   public abstract String trackerID();
 
   public String trackerName() {
-    return sc.locale.getString("trackers." + trackerID());
+    return settings.getString("locales." + sc.config.getString("language") + ".name");
   }
 
   // ----------------------------------------------------------------------------------------------
@@ -108,7 +169,6 @@ public abstract class AbstractTracker {
 
   public boolean activate(Player player, String name, boolean showError) {
     if (limitReached(player, TrackingActions.START, showError, null)) return false;
-
     sc.targets.activateTarget(player, trackerID(), name);
     return true;
   }
@@ -158,13 +218,29 @@ public abstract class AbstractTracker {
     return null;
   }
 
+  public double[] getCoords(Player player, String[] args) {
+    double[] coords = null;
+
+    if (args.length == 5)
+      try {
+        coords = new double[] { Double.parseDouble(args[3]), Double.parseDouble(args[4]) };
+      }
+      catch (Exception e) {}
+
+    if (coords == null) coords = new double[] { player.getLocation().getX(), player.getLocation().getZ() };
+
+    return coords;
+  }
+
   public List<String> list(Player player, TrackingActions action, String startWith) {
     if (action == null) return availableTargets(player, startWith);
 
     List<String> list = new ArrayList<String>();
 
     switch (action) {
+      case ACCEPT:
       case ADD:
+      case DENY:
         break;
 
       case ASK:
@@ -181,9 +257,17 @@ public abstract class AbstractTracker {
     return list;
   }
 
+  public List<String> listFiltered(Player player, List<String> list) {
+    if (player.hasPermission("scompass.track." + trackerID() + ".defined.*")) return list;
+
+    for (String name : list)
+      if (!player.hasPermission("scompass.track." + trackerID() + ".defined." + name)) list.remove(name);
+
+    return list;
+  }
+
   public boolean set(Player player, String name, double[] coords) {
     String key = key(player, name);
-
     if (datas().contains(key)) return false;
 
     String root    = key(player);
@@ -206,14 +290,12 @@ public abstract class AbstractTracker {
 
   public List<String> commandSuggestions(Player player, String[] args, HashMap<String, Object> parsed) {
     List<String> list = new ArrayList<>();
-
     if (args.length < 1 || args.length > 3) return list;
 
     switch (args.length) {
       case 2:
         for (TrackingActions action : getActionsAvailable(player, false)) {
           String name = getActionName(action);
-
           if (name.toLowerCase().startsWith(args[1].toLowerCase())) list.add(name);
         }
         break;
@@ -227,37 +309,29 @@ public abstract class AbstractTracker {
   }
 
   public String help(Player player, String command) {
+    String sep  = prepareMessage("commands.sctrack.help.separator") + "\n";
+    String help = sep + prepareMessage("commands.sctrack.help.header", ImmutableMap.of("tracker", trackerName())) + sep;
+
     List<String> list = new ArrayList<String>();
-    String       help = "";
+    list.add("noargs");
 
-    list.add("separator");
-    list.add("header");
-    list.add("separator");
-    list.add(trackerID() + ".noargs");
-    for (TrackingActions action : getActionsAvailable(player, true))
-      if (!action.equals(TrackingActions.HELP)) list.add(trackerID() + "." + action);
-    list.add("separator");
+    HashMap<String, String> placeholders = new HashMap<String, String>();
+    placeholders.put("command", command);
+    placeholders.put("tracker", trackerName());
 
-    for (String key : list) {
-      String message = sc.locale.getString("commands.sctrack.help." + key)
-          .replace("{command}", command).replace("{" + trackerID() + "}", trackerName()) + "\n";
-      if (key.equals("header")) message = message.replace("{tracker}", trackerName());
-      for (TrackingActions action : TrackingActions.values())
-        message = message.replace("{" + action + "}", sc.locale.getString("actions." + action));
-
-      help += sc.formatMessage(message.replace("{prefix}", sc.locale.getString("prefix")));
+    for (TrackingActions action : getActionsAvailable(player, true)) if (!action.equals(TrackingActions.HELP)) {
+      list.add(action.toString());
+      placeholders.put(action.toString(), sc.locale.getString("actions." + action));
     }
 
-    return help;
+    for (String key : list) help += prepareMessage("help." + key, placeholders) + "\n";
+    return help + sep;
   }
 
   public void parseArguments(Player player, String[] args, HashMap<String, Object> parsed) {
     TrackingActions action = getActionByName(args[1]);
-
     if (action == null || !getActionsAvailable(player, false).contains(action)) return;
-
     parsed.put("action", action);
-
     if (args.length == 2) return;
     if (get(player, args[2]) != null) parsed.put("target", args[2]);
   }
@@ -282,7 +356,6 @@ public abstract class AbstractTracker {
 
   public boolean save(String key, Object value) {
     datas().set(key, value);
-
     return sc.datas.saveUserDatas();
   }
 }

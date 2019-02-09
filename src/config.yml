@@ -176,48 +176,14 @@ compass:
           50: YELLOW
           20: RED
 
-# Options relative to the track command...
-tracker_settings:
-  priority: # Order in which trackers will be displayed
+ # Order in which trackers will be displayed (if they are installed and activated)
+trackers_priorities:
   - COORDS
   - PLAYER
   - POSITION
   - DEATH_POSITION
-
-  trackers:
-    COORDS:
-      symbol: "§e☉"        # Symbol displayed on the compass for this king of trackers.
-      temp: "ϼ"            # Advanced: Symbol temporary used by the plugin, must be unique, 1 char and not used in "symbol".
-      auto_activated: true # If true, the tracker is automatically activated when a coord is created
-      limits:
-        ADD: 10     # Number of maximum named coords a player can define
-        START: 1    # Number of maximum simultaneous coords a player can track
-
-    DEATH_POSITION:
-      symbol: "§d§l☠"
-      temp: "☙"
-      auto_activated: true # If true, the tracker is automatically activated on death
-
-    PLAYER:
-      symbol: "§a§l♙"
-      temp: "♃"
-      limits:
-        START: 1 # Number of maximum simultaneous players a player can track
-
-    POSITION:
-      symbol: "§c☤"
-      temp: "⚭"
-      auto_activated: false # If true, the tracker is automatically activated when a position is created
-      limits:
-        START: 2 # Number of maximum simultaneous positions a player can track
-
-  request_duration: 120 # Duration in seconds while a player tracking request stays valid.
-
-# Defined positions for players with "scompass.track.POSITION" permission
-positions: # DO NOT use a name you have defined in trackers_settings.trackers
-  spawn: { x: 0, z: 0} # /!\ You need to give permission scompass.track.POSITION.defined.spawn or scompass.track.POSITION.defined.* to use it
-  # random: { x: 1000, z: 1000}    <--- an example on how to add another defined position
-# Those positions can be managed in game with permission "scompass.track.POSITION.manage"
+  # When a new tracker is added, a new entrie is put here. You can prepare this list before if you want:
+  # trackerIDs here which correspond to nothing will be simply ignored.
 
 # Advanced... Delays / cache durations (FYI: 20 ticks = 1 second if your server doesn't lag)
 delays:

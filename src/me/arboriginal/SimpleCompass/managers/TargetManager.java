@@ -5,8 +5,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 import org.bukkit.entity.Player;
+import me.arboriginal.SimpleCompass.plugin.AbstractTracker;
 import me.arboriginal.SimpleCompass.plugin.SimpleCompass;
-import me.arboriginal.SimpleCompass.trackers.AbstractTracker;
 
 public class TargetManager {
   private SimpleCompass sc;
@@ -27,8 +27,9 @@ public class TargetManager {
       activeTargets.put(trackerID, new HashMap<UUID, List<String>>());
 
     trackersPriority = new String[sc.trackers.size()];
-    List<String> priority = sc.config.getStringList("tracker_settings.priority");
+    if (sc.trackers.size() == 0) return;
 
+    List<String> priority = sc.config.getStringList("trackers_priorities");
     for (int i = 0; i < priority.size(); i++) trackersPriority[i] = priority.get(i);
   }
 
@@ -36,12 +37,13 @@ public class TargetManager {
   // Trackers methods
   // ----------------------------------------------------------------------------------------------
 
+  public boolean canUseTracker(Player player, String trackerID) {
+    return player.hasPermission("scompass.track.*") || player.hasPermission("scompass.track." + trackerID);
+  }
+
   public List<String> getAvailableTrackers(Player player) {
     List<String> list = new ArrayList<String>();
-
-    for (String trackerID : sc.trackers.keySet())
-      if (player.hasPermission("scompass.track." + trackerID)) list.add(trackerID);
-
+    for (String trackerID : sc.trackers.keySet()) if (canUseTracker(player, trackerID)) list.add(trackerID);
     return list;
   }
 

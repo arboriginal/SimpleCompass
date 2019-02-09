@@ -23,10 +23,10 @@ import org.bukkit.scheduler.BukkitRunnable;
 import com.google.common.collect.ImmutableMap;
 import me.arboriginal.SimpleCompass.compasses.AbstractCompass.CompassModes;
 import me.arboriginal.SimpleCompass.compasses.AbstractCompass.CompassTypes;
+import me.arboriginal.SimpleCompass.plugin.AbstractTracker;
+import me.arboriginal.SimpleCompass.plugin.AbstractTracker.TargetSelector;
+import me.arboriginal.SimpleCompass.plugin.AbstractTracker.TrackingActions;
 import me.arboriginal.SimpleCompass.plugin.SimpleCompass;
-import me.arboriginal.SimpleCompass.trackers.AbstractTracker;
-import me.arboriginal.SimpleCompass.trackers.AbstractTracker.TargetSelector;
-import me.arboriginal.SimpleCompass.trackers.AbstractTracker.TrackingActions;
 import me.arboriginal.SimpleCompass.utils.NMSUtil;
 import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.TextComponent;
@@ -38,9 +38,12 @@ public class InterfaceCommand extends AbstractCommand implements CommandExecutor
   // ----------------------------------------------------------------------------------------------
 
   public InterfaceCommand(SimpleCompass plugin) {
-    super(plugin, "scompass", ImmutableMap.of(
-        SubCmds.OPTION, plugin.locale.getString("subcommands." + SubCmds.OPTION),
-        SubCmds.TRACK, plugin.locale.getString("subcommands." + SubCmds.TRACK)));
+    super(plugin, "scompass");
+
+    subCommands.put(SubCmds.OPTION, plugin.locale.getString("subcommands." + SubCmds.OPTION));
+
+    if (!sc.trackers.isEmpty())
+      subCommands.put(SubCmds.TRACK, plugin.locale.getString("subcommands." + SubCmds.TRACK));
   }
 
   // ----------------------------------------------------------------------------------------------
@@ -96,8 +99,8 @@ public class InterfaceCommand extends AbstractCommand implements CommandExecutor
     if (args.length == 1) {
       List<String> list = new ArrayList<String>();
 
-      for (SubCmds subCommand : SubCmds.values()) {
-        String subCommandName = sc.locale.getString("subcommands." + subCommand);
+      for (SubCmds subCommand : subCommands.keySet()) {
+        String subCommandName = subCommands.get(subCommand);
 
         if (subCommandName.toLowerCase().startsWith(args[0].toLowerCase())) list.add(subCommandName);
       }
@@ -256,7 +259,8 @@ public class InterfaceCommand extends AbstractCommand implements CommandExecutor
   }
 
   private boolean subCommand(Player player, SubCmds command, String argument) {
-    return argument.toLowerCase().equals(subCommands.get(command).toLowerCase())
+    return subCommands.get(command) != null
+        && argument.toLowerCase().equals(subCommands.get(command).toLowerCase())
         && player.hasPermission("scompass." + command.toString().toLowerCase())
         && (command.equals(SubCmds.OPTION) || !sc.trackers.isEmpty());
   }

@@ -8,9 +8,9 @@ import org.bukkit.entity.Player;
 import com.google.common.collect.ImmutableMap;
 import me.arboriginal.SimpleCompass.compasses.AbstractCompass.CompassModes;
 import me.arboriginal.SimpleCompass.compasses.AbstractCompass.CompassTypes;
+import me.arboriginal.SimpleCompass.plugin.AbstractTracker;
 import me.arboriginal.SimpleCompass.plugin.SimpleCompass;
-import me.arboriginal.SimpleCompass.trackers.AbstractTracker;
-import me.arboriginal.SimpleCompass.trackers.AbstractTracker.TrackingActions;
+import me.arboriginal.SimpleCompass.plugin.AbstractTracker.TrackingActions;
 
 public abstract class AbstractCommand {
   protected SimpleCompass        sc;
@@ -30,13 +30,8 @@ public abstract class AbstractCommand {
   // ----------------------------------------------------------------------------------------------
 
   public AbstractCommand(SimpleCompass plugin, String command) {
-    this(plugin, command, ImmutableMap.of());
-  }
-
-  public AbstractCommand(SimpleCompass plugin, String command, ImmutableMap<SubCmds, String> subCmdsMap) {
     sc          = plugin;
     mainCommand = command;
-    subCommands = subCmdsMap;
   }
 
   //-----------------------------------------------------------------------------------------------
@@ -167,10 +162,9 @@ public abstract class AbstractCommand {
       List<String> list = tracker.list(player, null, "");
 
       if (list == null || list.isEmpty())
-        sc.sendMessage(player, "commands.sctrack." + tracker.trackerID() + ".list_empty");
+        tracker.sendMessage(player, "list_empty");
       else
-        sc.sendMessage(player, "commands.sctrack." + tracker.trackerID() + ".list",
-            ImmutableMap.of("list", String.join(", ", list)));
+        tracker.sendMessage(player, "list", ImmutableMap.of("list", String.join(", ", list)));
 
       return true;
     }
@@ -204,8 +198,7 @@ public abstract class AbstractCommand {
   }
 
   protected List<TrackingActions> getActionsAvailable(Player player, String trackerID) {
-    if (!player.hasPermission("scompass.track." + trackerID)) return null;
-
+    if (!sc.targets.canUseTracker(player, trackerID)) return null;
     return sc.trackers.get(trackerID).getActionsAvailable(player, false);
   }
 

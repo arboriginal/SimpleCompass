@@ -8,6 +8,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
 import me.arboriginal.SimpleCompass.managers.TaskManager.TasksTypes;
+import me.arboriginal.SimpleCompass.plugin.AbstractTracker;
 import me.arboriginal.SimpleCompass.plugin.SimpleCompass;
 
 public abstract class AbstractCompass {
@@ -122,7 +123,7 @@ public abstract class AbstractCompass {
     return Arrays.asList('S', 'W', 'N', 'E').get(Math.round(owner.getLocation().getYaw() / 90f) & 0x3);
   }
 
-  private HashMap<String, ArrayList<double[]>> getActiveTrackers() { // @formatter:off
+  private HashMap<String, ArrayList<double[]>> getActiveTargets() { // @formatter:off
     String cacheKey = "trackers." + type;
     @SuppressWarnings("unchecked")
     HashMap<String, ArrayList<double[]>> trackers
@@ -137,8 +138,8 @@ public abstract class AbstractCompass {
   } // @formatter:on
 
   private String injectActivatedTrackers(String compass, String sepColor) {
-    HashMap<String, ArrayList<double[]>> trackers = getActiveTrackers();
-    if (trackers.isEmpty()) return compass;
+    HashMap<String, ArrayList<double[]>> targets = getActiveTargets();
+    if (targets.isEmpty()) return compass;
 
     Location refPos = owner.getEyeLocation();
     Vector   lookAt = refPos.getDirection().setY(0);
@@ -146,24 +147,21 @@ public abstract class AbstractCompass {
     HashMap<String, String> placeholders = new HashMap<String, String>();
 
     for (String type : sc.targets.trackersPriority) {
-      ArrayList<double[]> coords = trackers.get(type);
+      ArrayList<double[]> coords  = targets.get(type);
+      AbstractTracker     tracker = sc.trackers.get(type);
+      if (coords == null || tracker == null) continue;
 
-      if (coords == null) continue;
-
-      String marker = sc.config.getString("tracker_settings.trackers." + type + ".temp");
-      String symbol = sc.config.getString("tracker_settings.trackers." + type + ".symbol");
-
+      String marker = tracker.settings.getString("settings.temp");
+      String symbol = tracker.settings.getString("settings.symbol");
       placeholders.put(marker, symbol + sepColor);
 
-      for (double[] tracker : trackers.get(type)) {
-        Vector blockDirection = new Location(owner.getWorld(), tracker[0], refPos.getY(), tracker[1])
+      for (double[] target : targets.get(type)) {
+        Vector blockDirection = new Location(owner.getWorld(), target[0], refPos.getY(), target[1])
             .subtract(refPos).toVector().normalize();
 
         boolean viewable = (lookAt.dot(blockDirection) > 0);
         double  angle    = Math.toDegrees(blockDirection.angle(lookAt.crossProduct(new Vector(0, 1, 0))));
-
         if (!viewable) angle = (angle > 90) ? 180 : 0;
-
         int start = compass.length() - (int) Math.round(2 * angle * compass.length() / 360);
 
         compass = (start < 2) ? marker + compass.substring(start + 1)
