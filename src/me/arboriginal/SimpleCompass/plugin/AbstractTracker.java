@@ -42,6 +42,10 @@ public abstract class AbstractTracker {
   // Initialization methods
   // ----------------------------------------------------------------------------------------------
 
+  /**
+   * At this state, config has not been read from user file,
+   * so DO NOT USE sc.config here, and DO NOT call methods which use this.
+   */
   public boolean init() {
     if (!sf.exists()) {
       URL res = getClass().getResource("/settings.yml");
@@ -51,10 +55,12 @@ public abstract class AbstractTracker {
         LangUtil.writeResourceToFile(res.openStream(), sf);
       }
       catch (Exception e) {
+        sc.getLogger().severe("Can't write to " + sf.getAbsolutePath());
         return false;
       }
     }
 
+    sc.getLogger().info("Default settings for " + trackerID() + " tracker copied into " + sf.getPath());
     settings = YamlConfiguration.loadConfiguration(sf);
     return true;
   }

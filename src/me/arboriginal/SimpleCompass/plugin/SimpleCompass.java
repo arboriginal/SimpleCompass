@@ -38,9 +38,9 @@ public class SimpleCompass extends JavaPlugin implements TabCompleter {
   public DataManager       datas;
   public TaskManager       tasks;
   public TargetManager     targets;
-  public CompassManager    compasses;
   public Listeners         listeners;
-  public boolean           isReady = false;
+  public CompassManager    compasses = null;
+  public boolean           isReady   = false;
 
   public HashMap<String, AbstractTracker> trackers;
 
@@ -128,14 +128,14 @@ public class SimpleCompass extends JavaPlugin implements TabCompleter {
   public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
     if (command.getName().toLowerCase().equals("scompass-reload")) {
       reloadConfig();
-      
+
       for (String tracker : trackers.keySet()) {
         if (!trackers.get(tracker).init()) {
           trackers.remove(tracker);
           sendMessage(sender, "tracker_disabled", ImmutableMap.of("tracker", tracker));
         }
       }
-      
+
       sendMessage(sender, "configuration_reloaded");
       return true;
     }
@@ -252,50 +252,88 @@ public class SimpleCompass extends JavaPlugin implements TabCompleter {
     for (final File file : dir.listFiles()) {
       if (file.isDirectory() || !file.getName().endsWith(".jar")) continue;
 
+      Exception error = loadTrackerFile(file);
+
+      if (error == null)
+        getLogger().info("Tracker §6{tracker}§r successfully loaded".replace("{tracker}", file.getName()));
+      else
+        getLogger().severe("Error loading tracker " + file.getName() + ": " + error.getMessage());
+    }
+  }
+
+  private Exception loadTrackerException(URLClassLoader loader, JarFile jar, String message) {
+    if (loader != null)
       try {
-        String         path   = file.getAbsolutePath();
-        JarFile        jar    = new JarFile(path);
-        URLClassLoader loader = new URLClassLoader(
-            new URL[] { new URL("jar:file://" + path + "!/") },
-            getClassLoader());
+        loader.close();
+      }
+      catch (Exception e) {}
 
-        Enumeration<JarEntry> entries = jar.entries();
-        while (entries.hasMoreElements()) {
-          JarEntry entry = entries.nextElement();
-          if (entry.isDirectory() || !entry.getName().endsWith(".class")) continue;
-
-          String className = entry.getName().substring(0, entry.getName().length() - 6).replace('/', '.');
-          Object tracker   = null;
-
-          try {
-            tracker = Class.forName(className, true, loader).getConstructor(this.getClass()).newInstance(this);
-          }
-          catch (NoClassDefFoundError e) {}
-
-          if (tracker == null || !(tracker instanceof AbstractTracker)) continue;
-          String trackerID = ((AbstractTracker) tracker).trackerID();
-
-          if (trackers.containsKey(trackerID)) {
-            getLogger().warning(
-                "Tracker {tracker} is using the ID {id} which is already used by {other}, can't load it..."
-                    .replace("{tracker}", file.getName()).replace("id", trackerID)
-                    .replace("{other}", trackers.get(trackerID).getClass().getSimpleName()));
-            continue;
-          }
-
-          if (((AbstractTracker) tracker).init()) {
-            trackers.put(trackerID, (AbstractTracker) tracker);
-            getLogger().info("Tracker §6{tracker}§r successfully loaded".replace("{tracker}", file.getName()));
-          }
-          else
-            throw new Exception();
-        }
-
+    if (jar != null)
+      try {
         jar.close();
       }
-      catch (Exception e) {
-        getLogger().severe("Error loading tracker " + file.getName() + "...");
-      }
+      catch (Exception e) {}
+
+    return new Exception(message);
+  }
+
+  private Exception loadTrackerFile(File file) {
+    URLClassLoader loader = null;
+    JarFile        jar    = null;
+
+    try {
+      loader = new URLClassLoader(new URL[] { new URL("jar:" + file.toURI().toURL() + "!/") }, getClassLoader());
     }
+    catch (Exception e) {
+      return loadTrackerException(loader, jar, "Can't initialize a class loader from " + file.getName());
+    }
+
+    Enumeration<JarEntry> entries = null;
+
+    try {
+      jar     = new JarFile(file.getAbsolutePath());
+      entries = jar.entries();
+    }
+    catch (Exception e) {}
+
+    if (entries == null)
+      return loadTrackerException(loader, jar, "Can't initialize a class loader from " + file.getName());
+
+    while (entries.hasMoreElements()) {
+      JarEntry entry = entries.nextElement();
+      if (entry.isDirectory() || !entry.getName().endsWith(".class")) continue;
+
+      String className = entry.getName().substring(0, entry.getName().length() - 6).replace('/', '.');
+      Object tracker   = null;
+
+      try {
+        tracker = Class.forName(className, true, loader).getConstructor(this.getClass()).newInstance(this);
+      }
+      catch (NoClassDefFoundError e) {
+        return loadTrackerException(loader, jar, "Can't find class " + className + " in " + file.getName() + "...");
+      }
+      catch (Exception e) {
+        return loadTrackerException(loader, jar, "Can't load class " + className + " from " + file.getName() + "...");
+      }
+
+      if (!(tracker instanceof AbstractTracker)) continue;
+      String trackerID = ((AbstractTracker) tracker).trackerID();
+
+      if (trackers.containsKey(trackerID))
+        return loadTrackerException(loader, jar,
+            "Tracker {tracker} is using the ID {id} which is already used by {other}..."
+                .replace("{tracker}", file.getName()).replace("id", trackerID)
+                .replace("{other}", trackers.get(trackerID).getClass().getSimpleName()));
+
+      if (!((AbstractTracker) tracker).init())
+        return loadTrackerException(loader, jar,
+            "Tracker {tracker} failed on init...".replace("{tracker}", file.getName()).replace("id", trackerID));
+
+      trackers.put(trackerID, (AbstractTracker) tracker);
+      loadTrackerException(loader, jar, "");
+      return null;
+    }
+
+    return loadTrackerException(loader, jar, "No tracker found in the jar file...");
   }
 }
