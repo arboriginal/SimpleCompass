@@ -53,6 +53,7 @@ public abstract class AbstractTracker {
 
       try {
         LangUtil.writeResourceToFile(res.openStream(), sf);
+        sc.getLogger().info("Default settings for " + trackerID() + " tracker copied into " + sf.getPath());
       }
       catch (Exception e) {
         sc.getLogger().severe("Can't write to " + sf.getAbsolutePath());
@@ -60,7 +61,6 @@ public abstract class AbstractTracker {
       }
     }
 
-    sc.getLogger().info("Default settings for " + trackerID() + " tracker copied into " + sf.getPath());
     settings = YamlConfiguration.loadConfiguration(sf);
     return true;
   }

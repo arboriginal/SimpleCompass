@@ -2,6 +2,7 @@ package me.arboriginal.SimpleCompass.managers;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
 import org.bukkit.configuration.MemorySection;
@@ -91,7 +92,12 @@ public class CompassManager {
   }
 
   public void removeCompass(CompassTypes type) {
-    for (UUID uid : compasses.get(type).keySet()) removeCompass(type, uid);
+    Iterator<UUID> it = compasses.get(type).keySet().iterator();
+    while (it.hasNext()) {
+      AbstractCompass compass = getCompass(type, it.next());
+      if (compass != null) compass.delete();
+      it.remove();
+    }
   }
 
   public void removeCompass(Player player) {
@@ -104,9 +110,7 @@ public class CompassManager {
 
   public void removeCompass(CompassTypes type, UUID uid) {
     AbstractCompass compass = getCompass(type, uid);
-
     if (compass == null) return;
-
     compass.delete();
     compasses.get(type).remove(uid);
   }
