@@ -126,9 +126,10 @@ public class DataManager {
 
   public void compassOptionSet(Player player, CompassTypes type, CompassOptions option) {
     if (sc.config.getBoolean("single_compass_mode") && !option.equals(CompassOptions.DISABLED))
-      for (CompassTypes otherType : CompassTypes.values())
-        if (!type.equals(otherType))
-          users.set(compassOptionKey(player, otherType), CompassOptions.DISABLED.toString());
+      for (CompassTypes otherType : CompassTypes.values()) if (!type.equals(otherType)) {
+        users.set(compassOptionKey(player, otherType), CompassOptions.DISABLED.toString());
+        sc.compasses.removeCompass(otherType, player);
+      }
 
     users.set(compassOptionKey(player, type), option.toString());
     saveUserDatas();
