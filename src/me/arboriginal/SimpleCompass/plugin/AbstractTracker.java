@@ -8,6 +8,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.MemorySection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -39,7 +40,25 @@ public abstract class AbstractTracker {
   }
 
   // ----------------------------------------------------------------------------------------------
-  // Initialization methods
+  // Tracker methods
+  // ----------------------------------------------------------------------------------------------
+
+  public abstract String trackerID();
+
+  public String github() {
+    return null;
+  }
+
+  public String trackerName() {
+    return settings.getString("locales." + sc.config.getString("language") + ".name");
+  }
+
+  public String version() {
+    return "?";
+  }
+
+  // ----------------------------------------------------------------------------------------------
+  // Initialization and update methods
   // ----------------------------------------------------------------------------------------------
 
   /**
@@ -65,18 +84,41 @@ public abstract class AbstractTracker {
     return true;
   }
 
+  public void checkUpdate(CommandSender sender) {
+    if (!settings.getBoolean("settings.check_update", true)) return;
+
+    String github = github();
+
+    if (github == null) {
+      sendMessage(sender, "tracker_check_update_available",
+          ImmutableMap.of("tracker", trackerName(), "version", "new", "current", version()));
+      return;
+    }
+
+    String version = sc.githubVersion(github);
+
+    if (version == null)
+      sendMessage(sender, "tracker_check_update_failed", ImmutableMap.of("tracker", trackerName()));
+    else {
+      String current = version();
+      if (!version.equals(current))
+        sendMessage(sender, "tracker_check_update_available",
+            ImmutableMap.of("tracker", trackerName(), "version", version, "current", current));
+    }
+  }
+
   // ----------------------------------------------------------------------------------------------
   // Utils methods
   // ----------------------------------------------------------------------------------------------
 
-  public void sendMessage(Player player, String key) {
-    sendMessage(player, key, null);
+  public void sendMessage(CommandSender sender, String key) {
+    sendMessage(sender, key, null);
   }
 
-  public void sendMessage(Player player, String key, Map<String, String> placeholders) {
+  public void sendMessage(CommandSender sender, String key, Map<String, String> placeholders) {
     if (key.isEmpty()) return;
     String message = prepareMessage(key, placeholders);
-    if (!message.isEmpty()) player.sendMessage(message);
+    if (!message.isEmpty()) sender.sendMessage(message);
   }
 
   public String prepareMessage(String key) {
@@ -157,16 +199,6 @@ public abstract class AbstractTracker {
       default:
         return TargetSelector.NONE;
     }
-  }
-
-  // ----------------------------------------------------------------------------------------------
-  // Tracker methods
-  // ----------------------------------------------------------------------------------------------
-
-  public abstract String trackerID();
-
-  public String trackerName() {
-    return settings.getString("locales." + sc.config.getString("language") + ".name");
   }
 
   // ----------------------------------------------------------------------------------------------

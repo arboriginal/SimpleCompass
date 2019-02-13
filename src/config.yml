@@ -1,6 +1,9 @@
 # Choose lang file you want to use, actually, only en and fr exists, but you can set what you want...
 language: en # If this lang file doesn't exist, a new one is created (copy of english, so you can edit it).
 
+# If true, when you (re)load the plugin, it try to check if a new version is available
+check_update: true
+
 # You decide if your players can use both compass at the same time, or only one.
 # In this case, you have to use « DISABLED » in one of the type's default option.
 #
@@ -187,6 +190,7 @@ trackers_priorities:
 
 # Advanced... Delays / cache durations (FYI: 20 ticks = 1 second if your server doesn't lag)
 delays:
+  update_version_cache: 60 # (minute) Duration of cache of online version found (should stay large or you will reach rate limit from Github)
   update_compass: 100    # (millisec) Compass datas refresh on player move, put 0 if you have predator's eyes
   trackers_list: 2000    # (millisec) Active trackers list (by player) cache 
   death_position: 900    # (seconds)  Time the last death location stays active

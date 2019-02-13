@@ -10,6 +10,14 @@ prefix: "&8[&eSimpleCompass&8] "  # Mais tu peux aussi le décider de retirer la
 
 # Message affiché quand la commande reload est utilisée
 configuration_reloaded: "{prefix}&aConfiguration rechargée"
+# Message affiché quand une nouvelle version du plugin est trouvée
+plugin_check_update_available: "&bLa version &l{version}&b est disponible, &3version actuelle : &l{current}"
+# Message affiché quand le plugin ne parvient pas à vérifier ses mises à jour
+plugin_check_update_failed: "&6La vérification de mise à jour du plugin a échoué"
+# Message affiché quand une nouvelle version d'un tracker est trouvée
+tracker_check_update_available: "* &6Tracker {tracker}: &bversion &l{version}&b trouvée &3(actuelle: &l{current}&3)"
+# Message affiché quand le plugin ne parvient pas à vérifier les mises à jour d'un tracker
+tracker_check_update_failed: "* &6Tracker {tracker}: &eLa recherche de mise à jour a échoué"
 # Message affiché quand la commande reload est utilisée et qu'un tracker ne s'initialise pas correctement
 tracker_disabled: "{prefix}&cLe tracker {tracker} n'a pas pu être rechargé, il a été désactivé."
 

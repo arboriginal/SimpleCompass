@@ -1,6 +1,8 @@
 package me.arboriginal.SimpleCompass.plugin;
 
 import java.io.File;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.Enumeration;
@@ -17,6 +19,8 @@ import org.bukkit.command.TabCompleter;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 import com.google.common.collect.ImmutableMap;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
 import me.arboriginal.SimpleCompass.commands.InterfaceCommand;
 import me.arboriginal.SimpleCompass.commands.OptionCommand;
 import me.arboriginal.SimpleCompass.commands.TrackCommand;
@@ -73,6 +77,7 @@ public class SimpleCompass extends JavaPlugin implements TabCompleter {
 
     loadTrackers();
     reloadConfig();
+    checkUpdate(getServer().getConsoleSender());
 
     if (!trackers.isEmpty()) getCommand("scompass-track").setExecutor(new TrackCommand(this));
 
@@ -137,6 +142,7 @@ public class SimpleCompass extends JavaPlugin implements TabCompleter {
       }
 
       sendMessage(sender, "configuration_reloaded");
+      checkUpdate(sender);
       return true;
     }
 
@@ -144,8 +150,35 @@ public class SimpleCompass extends JavaPlugin implements TabCompleter {
   }
 
   // ----------------------------------------------------------------------------------------------
-  // Package methods: Helper methods for messages
+  // Public methods
   // ----------------------------------------------------------------------------------------------
+
+  public TextComponent createClickableMessage(String text, Map<String, Map<String, String>> commands) {
+    TextComponent textComponent = new TextComponent();
+
+    for (String command : commands.keySet()) text = text.replace(command, "§k" + command + "§r");
+
+    for (BaseComponent component : TextComponent.fromLegacyText(text)) {
+      if (component instanceof TextComponent) {
+        Map<String, String> command = commands.get(((TextComponent) component).getText().trim());
+
+        if (command != null) {
+          if (command.containsKey("text")) ((TextComponent) component).setText("§r" + command.get("text"));
+
+          if (command.containsKey("click"))
+            component.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, command.get("click")));
+
+          if (command.containsKey("hover"))
+            component.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                TextComponent.fromLegacyText(command.get("hover"))));
+        }
+      }
+
+      textComponent.addExtra(component);
+    }
+
+    return textComponent;
+  }
 
   public String formatMessage(String message) {
     return ChatColor.translateAlternateColorCodes('&', message);
@@ -172,6 +205,25 @@ public class SimpleCompass extends JavaPlugin implements TabCompleter {
     }
 
     return human.replaceFirst("^0+(?!$)", "");
+  }
+
+  public String githubVersion(String repository) {
+    String version = (String) cache.versionGet(repository);
+    if (version != null) return version;
+
+    String url = "https://api.github.com/repos/" + repository + "/releases";
+
+    try {
+      HttpURLConnection connexion = (HttpURLConnection) new URL(url).openConnection();
+      connexion.addRequestProperty("User-Agent", "SimpleCompass");
+      JsonElement element = new JsonParser().parse(new InputStreamReader(connexion.getInputStream()));
+
+      version = element.getAsJsonArray().get(0).getAsJsonObject().get("tag_name").getAsString();
+    }
+    catch (Exception e) {}
+
+    cache.versionSet(repository, version, config.getInt("delays.update_version_cache"));
+    return version;
   }
 
   public String prepareMessage(String key) {
@@ -205,39 +257,26 @@ public class SimpleCompass extends JavaPlugin implements TabCompleter {
   }
 
   // ----------------------------------------------------------------------------------------------
-  // Package methods: Helper methods for advanced messages
-  // ----------------------------------------------------------------------------------------------
-
-  public TextComponent createClickableMessage(String text, Map<String, Map<String, String>> commands) {
-    TextComponent textComponent = new TextComponent();
-
-    for (String command : commands.keySet()) text = text.replace(command, "§k" + command + "§r");
-
-    for (BaseComponent component : TextComponent.fromLegacyText(text)) {
-      if (component instanceof TextComponent) {
-        Map<String, String> command = commands.get(((TextComponent) component).getText().trim());
-
-        if (command != null) {
-          if (command.containsKey("text")) ((TextComponent) component).setText("§r" + command.get("text"));
-
-          if (command.containsKey("click"))
-            component.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, command.get("click")));
-
-          if (command.containsKey("hover"))
-            component.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
-                TextComponent.fromLegacyText(command.get("hover"))));
-        }
-      }
-
-      textComponent.addExtra(component);
-    }
-
-    return textComponent;
-  }
-
-  // ----------------------------------------------------------------------------------------------
   // Private methods
   // ----------------------------------------------------------------------------------------------
+
+  private void checkUpdate(CommandSender sender) {
+    if (!config.getBoolean("check_update")) return;
+    String version = githubVersion("arboriginal/SimpleCompass");
+
+    if (version == null)
+      sendMessage(sender, "plugin_check_update_failed");
+    else {
+      String current = getDescription().getVersion();
+      if (!version.equals(current))
+        sendMessage(sender, "plugin_check_update_available", ImmutableMap.of("version", version, "current", current));
+    }
+
+    if (trackers.isEmpty()) return;
+    trackers.forEach((trackerID, tracker) -> {
+      tracker.checkUpdate(sender);
+    });
+  }
 
   private void loadTrackers() {
     File dir = new File(getDataFolder(), "trackers");

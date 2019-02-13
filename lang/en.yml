@@ -10,6 +10,14 @@ prefix: "&8[&eSimpleCompass&8] "  # But you can also decide to remove the {prefi
 
 # Message displayed when using the reload command
 configuration_reloaded: "{prefix}&aConfiguration successfully reloaded"
+# Message displayed when a new plugin version is found
+plugin_check_update_available: "&bVersion &l{version}&b is out, &3current version: &l{current}"
+# Message displayed when the plugin fail to check for an update
+plugin_check_update_failed: "&6Can't check plugin update..."
+# Message displayed when a new version is found for a tracker
+tracker_check_update_available: "* &6Tracker {tracker}: &bversion &l{version}&b found &3(current: &l{current}&3)"
+# Message displayed when the plugin fail to check for a tracker update
+tracker_check_update_failed: "* &6Tracker {tracker}: &eCan't check for update"
 # Message displayed when using the reload command and a tracker can't init correctly
 tracker_disabled: "{prefix}&cTracker {tracker} can't be reloaded, it has been disabled."
 

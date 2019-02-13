@@ -1,12 +1,17 @@
 package me.arboriginal.SimpleCompass.utils;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.UUID;
+import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import me.arboriginal.SimpleCompass.plugin.SimpleCompass;
 
 public class CacheUtil {
   private SimpleCompass                        sc;
+  private File                                 vcf;
+  private FileConfiguration                    vcc;
   private HashMap<UUID, HashMap<String, Data>> datas;
 
   public static final int PERMANENT = -1;
@@ -16,11 +21,22 @@ public class CacheUtil {
   // ----------------------------------------------------------------------------------------------
 
   public CacheUtil(SimpleCompass plugin) {
-    sc = plugin;
+    sc  = plugin;
+    vcf = new File(sc.getDataFolder(), "versionCache.yml");
+
+    if (!vcf.exists())
+      try {
+        vcf.createNewFile();
+      }
+      catch (Exception e) {
+        sc.getLogger().warning("Can't write to version cache file");
+      }
+
+    vcc = YamlConfiguration.loadConfiguration(vcf);
     reset();
   }
 
-  //-----------------------------------------------------------------------------------------------
+  // ----------------------------------------------------------------------------------------------
   // Static methods
   // ----------------------------------------------------------------------------------------------
 
@@ -28,7 +44,7 @@ public class CacheUtil {
     return System.currentTimeMillis();
   }
 
-  //-----------------------------------------------------------------------------------------------
+  // ----------------------------------------------------------------------------------------------
   // Public methods
   // ----------------------------------------------------------------------------------------------
 
@@ -42,7 +58,6 @@ public class CacheUtil {
 
   public Object get(UUID uid, String key) {
     Data data = datas.get(uid).get(key);
-
     return (data != null && (data.expire == PERMANENT || data.expire > now())) ? data.value : null;
   }
 
@@ -60,7 +75,28 @@ public class CacheUtil {
     datas.get(uid).put(key, new Data((duration == PERMANENT) ? PERMANENT : now() + duration, value));
   }
 
-  //-----------------------------------------------------------------------------------------------
+  // ----------------------------------------------------------------------------------------------
+  // Public methods: Version update check cache
+  // ----------------------------------------------------------------------------------------------
+
+  public Object versionGet(String key) {
+    long expire = vcc.getLong("version." + key + ".expire", 0);
+    return (expire > now()) ? vcc.get("version." + key + ".value", null) : null;
+  }
+
+  public void versionSet(String key, Object value, int duration) {
+    vcc.set("version." + key + ".expire", now() + duration * 600000);
+    vcc.set("version." + key + ".value", value);
+
+    try {
+      vcc.save(vcf);
+    }
+    catch (Exception e) {
+      sc.getLogger().warning("Can't write to version cache file");
+    }
+  }
+
+  // ----------------------------------------------------------------------------------------------
   // Private classes
   // ----------------------------------------------------------------------------------------------
 
