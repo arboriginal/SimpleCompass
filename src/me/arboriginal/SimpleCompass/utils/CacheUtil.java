@@ -85,7 +85,7 @@ public class CacheUtil {
   }
 
   public void versionSet(String key, Object value, int duration) {
-    vcc.set("version." + key + ".expire", now() + duration * 600000);
+    vcc.set("version." + key + ".expire", now() + duration * 60000);
     vcc.set("version." + key + ".value", value);
 
     try {

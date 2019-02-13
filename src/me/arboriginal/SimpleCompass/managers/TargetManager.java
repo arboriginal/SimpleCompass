@@ -94,25 +94,37 @@ public class TargetManager {
   }
 
   public HashMap<String, ArrayList<double[]>> getTargetsCoords(Player player) {
-    HashMap<String, ArrayList<double[]>> list = new HashMap<String, ArrayList<double[]>>();
-    UUID                                 uid  = player.getUniqueId();
+    HashMap<String, ArrayList<double[]>>        list = new HashMap<String, ArrayList<double[]>>();
+    HashMap<AbstractTracker, ArrayList<String>> stop = new HashMap<AbstractTracker, ArrayList<String>>();
+    UUID                                        uid  = player.getUniqueId();
 
     for (String trackerID : sc.trackers.keySet()) {
-      if (activeTargets.get(trackerID).containsKey(uid)) {
-        AbstractTracker tracker = sc.trackers.get(trackerID);
+      if (!activeTargets.get(trackerID).containsKey(uid)) continue;
+      AbstractTracker tracker = sc.trackers.get(trackerID);
+      if (tracker == null) continue;
 
-        if (tracker == null) continue;
+      ArrayList<double[]> sublist = new ArrayList<double[]>();
+      ArrayList<String>   closest = new ArrayList<String>();
 
-        ArrayList<double[]> sublist = new ArrayList<double[]>();
+      for (String name : activeTargets.get(trackerID).get(uid)) {
+        double[] coords = tracker.get(player, name);
 
-        for (String name : activeTargets.get(trackerID).get(uid)) {
-          double[] coords = tracker.get(player, name);
-
-          if (coords != null) sublist.add(coords);
-        }
-
-        if (!sublist.isEmpty()) list.put(trackerID, sublist);
+        if (coords == null || tracker.playerIsClose(player, coords))
+          closest.add(name);
+        else
+          sublist.add(coords);
       }
+
+      if (!sublist.isEmpty()) list.put(trackerID, sublist);
+      if (!closest.isEmpty()) stop.put(tracker, closest);
+    }
+
+    if (!stop.isEmpty()) {
+      stop.forEach((tracker, stopped) -> {
+        stopped.forEach(name -> {
+          tracker.disable(player, name);
+        });
+      });
     }
 
     return list;

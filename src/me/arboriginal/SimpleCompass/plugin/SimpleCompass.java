@@ -134,10 +134,13 @@ public class SimpleCompass extends JavaPlugin implements TabCompleter {
     if (command.getName().toLowerCase().equals("scompass-reload")) {
       reloadConfig();
 
-      for (String tracker : trackers.keySet()) {
-        if (!trackers.get(tracker).init()) {
-          trackers.remove(tracker);
-          sendMessage(sender, "tracker_disabled", ImmutableMap.of("tracker", tracker));
+      Iterator<String> it = trackers.keySet().iterator();
+      while (it.hasNext()) {
+        String trackerID = it.next();
+
+        if (!trackers.get(trackerID).init()) {
+          it.remove();
+          sendMessage(sender, "tracker_disabled", ImmutableMap.of("tracker", trackerID));
         }
       }
 

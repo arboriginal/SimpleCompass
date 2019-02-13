@@ -10,6 +10,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import org.bukkit.Location;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.MemorySection;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -333,6 +334,12 @@ public abstract class AbstractTracker {
 
     save(key, null);
     return false;
+  }
+
+  public boolean playerIsClose(Player player, double[] coords) {
+    int dist = settings.getInt("settings.auto_disabled", 0);
+    return (dist > 0 && player.getLocation().distance(
+        new Location(player.getWorld(), coords[0], player.getLocation().getY(), coords[1])) < dist);
   }
 
   // ----------------------------------------------------------------------------------------------
