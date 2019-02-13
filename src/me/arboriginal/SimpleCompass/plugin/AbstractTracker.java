@@ -298,10 +298,11 @@ public abstract class AbstractTracker {
   public List<String> listFiltered(Player player, List<String> list) {
     if (player.hasPermission("scompass.track." + trackerID() + ".defined.*")) return list;
 
+    List<String> filtered = new ArrayList<String>();
     for (String name : list)
-      if (!player.hasPermission("scompass.track." + trackerID() + ".defined." + name)) list.remove(name);
+      if (player.hasPermission("scompass.track." + trackerID() + ".defined." + name)) filtered.add(name);
 
-    return list;
+    return filtered;
   }
 
   public boolean set(Player player, String name, double[] coords) {
