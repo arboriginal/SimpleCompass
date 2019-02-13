@@ -142,7 +142,6 @@ public abstract class AbstractCompass {
     if (targets.isEmpty()) return compass;
 
     Location refPos = owner.getEyeLocation();
-    Vector   lookAt = refPos.getDirection().setY(0);
 
     HashMap<String, String> placeholders = new HashMap<String, String>();
 
@@ -155,10 +154,11 @@ public abstract class AbstractCompass {
       String symbol = tracker.settings.getString("settings.symbol");
       placeholders.put(marker, symbol + sepColor);
 
-      for (double[] target : targets.get(type)) {
+      for (double[] target : coords) {
         Vector blockDirection = new Location(owner.getWorld(), target[0], refPos.getY(), target[1])
             .subtract(refPos).toVector().normalize();
 
+        Vector  lookAt   = refPos.getDirection().setY(0);
         boolean viewable = (lookAt.dot(blockDirection) > 0);
         double  angle    = Math.toDegrees(blockDirection.angle(lookAt.crossProduct(new Vector(0, 1, 0))));
         if (!viewable) angle = (angle > 90) ? 180 : 0;

@@ -1,6 +1,8 @@
 package me.arboriginal.SimpleCompass.plugin;
 
 import java.io.File;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -14,7 +16,6 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import com.google.common.collect.ImmutableMap;
-import me.arboriginal.SimpleCompass.utils.LangUtil;
 
 public abstract class AbstractTracker {
   protected SimpleCompass sc;
@@ -66,21 +67,32 @@ public abstract class AbstractTracker {
    * so DO NOT USE sc.config here, and DO NOT call methods which use this.
    */
   public boolean init() {
-    if (!sf.exists()) {
-      URL res = getClass().getResource("/settings.yml");
-      if (res == null) return false;
-
-      try {
-        LangUtil.writeResourceToFile(res.openStream(), sf);
-        sc.getLogger().info("Default settings for " + trackerID() + " tracker copied into " + sf.getPath());
-      }
-      catch (Exception e) {
-        sc.getLogger().severe("Can't write to " + sf.getAbsolutePath());
-        return false;
-      }
-    }
+    URL res = getClass().getResource("/settings.yml");
+    if (res == null) return false;
 
     settings = YamlConfiguration.loadConfiguration(sf);
+    settings.options().copyDefaults(true);
+
+    InputStream is;
+
+    try {
+      is = res.openStream();
+    }
+    catch (Exception e) {
+      sc.getLogger().warning("Can't write default settings to " + sf.getAbsolutePath());
+      return false;
+    }
+
+    settings.setDefaults(YamlConfiguration.loadConfiguration(new InputStreamReader(is)));
+
+    try {
+      settings.save(sf);
+    }
+    catch (Exception e) {
+      sc.getLogger().severe("Can't write to " + sf.getAbsolutePath());
+      return false;
+    }
+
     return true;
   }
 

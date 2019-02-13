@@ -336,7 +336,7 @@ public class SimpleCompass extends JavaPlugin implements TabCompleter {
     catch (Exception e) {}
 
     if (entries == null)
-      return loadTrackerException(loader, jar, "Can't initialize a class loader from " + file.getName());
+      return loadTrackerException(loader, jar, "Can't read content of " + file.getName());
 
     while (entries.hasMoreElements()) {
       JarEntry entry = entries.nextElement();

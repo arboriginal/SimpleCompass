@@ -149,16 +149,19 @@ public class InterfaceCommand extends AbstractCommand implements CommandExecutor
   }
 
   private void buildInterfaceTracking(Player player, BookMeta meta) {
-    Set<String> ordered = sc.locale
-        .getConfigurationSection("commands." + mainCommand + ".track.buttons").getKeys(false);
+    List<String> trackers = new ArrayList<String>();
+    Set<String>  ordered  = sc.locale.getConfigurationSection(
+        "commands." + mainCommand + ".track.buttons").getKeys(false);
 
-    for (String[] part : chunk(sc.targets.trackersPriority,
+    for (String trackerID : sc.targets.trackersPriority)
+      if (player.hasPermission("scompass.track." + trackerID)) trackers.add(trackerID);
+
+    for (String[] part : chunk(trackers.toArray(new String[trackers.size()]),
         sc.locale.getInt("commands." + mainCommand + ".track.per_page"))) {
       ArrayList<BaseComponent> content = new ArrayList<BaseComponent>();
       content.add(new TextComponent(sc.prepareMessage("commands." + mainCommand + ".header") + "\n\n"));
 
       for (String trackerID : part) {
-        if (!player.hasPermission("scompass.track." + trackerID)) continue;
         AbstractTracker tracker = sc.trackers.get(trackerID);
         if (tracker == null) continue;
 
