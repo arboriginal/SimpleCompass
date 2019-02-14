@@ -189,7 +189,7 @@ public class DataManager {
     String       key  = activeTargetsKey(player, type);
     List<String> list = new ArrayList<String>();
 
-    if (users.getList(key) != null) for (String tracker : users.getStringList(key)) list.add(tracker);
+    if (users.getList(key) != null) for (String target : users.getStringList(key)) list.add(target);
 
     return list;
   }

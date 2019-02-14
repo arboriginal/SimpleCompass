@@ -21,6 +21,7 @@ import com.google.common.collect.ImmutableMap;
 public abstract class AbstractTracker {
   protected SimpleCompass sc;
   protected File          sf;
+  protected URL           res;
 
   public enum TrackingActions {
     ADD, ACCEPT, ASK, DEL, DENY, HELP, START, STOP,
@@ -37,8 +38,9 @@ public abstract class AbstractTracker {
   // ----------------------------------------------------------------------------------------------
 
   public AbstractTracker(SimpleCompass plugin) {
-    sc = plugin;
-    sf = new File(sc.getDataFolder(), "trackers/" + getClass().getSimpleName() + ".yml");
+    sc  = plugin;
+    sf  = new File(sc.getDataFolder(), "trackers/" + getClass().getSimpleName() + ".yml");
+    res = getClass().getResource("/settings.yml");
   }
 
   // ----------------------------------------------------------------------------------------------
@@ -68,8 +70,10 @@ public abstract class AbstractTracker {
    * so DO NOT USE sc.config here, and DO NOT call methods which use this.
    */
   public boolean init() {
-    URL res = getClass().getResource("/settings.yml");
-    if (res == null) return false;
+    if (res == null) {
+      sc.getLogger().warning("settings.yml missing in " + sf.getAbsolutePath());
+      return false;
+    }
 
     settings = YamlConfiguration.loadConfiguration(sf);
     settings.options().copyDefaults(true);
