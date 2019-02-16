@@ -365,8 +365,8 @@ public class SimpleCompass extends JavaPlugin implements TabCompleter {
         return loadTrackerException(loader, jar,
             "Tracker {tracker} is using the ID {id} which is already used by {other}..."
                 .replace("{tracker}", file.getName()).replace("id", trackerID)
-                .replace("{other}", trackers.get(trackerID).getClass().getSimpleName()));
-
+                .replace("{other}", trackers.get(trackerID).getClass().getSimpleName())); 
+      
       if (!((AbstractTracker) tracker).init())
         return loadTrackerException(loader, jar,
             "Tracker {tracker} failed on init...".replace("{tracker}", file.getName()).replace("id", trackerID));

@@ -20,6 +20,8 @@ tracker_check_update_available: "* &6Tracker {tracker}: &bversion &l{version}&b 
 tracker_check_update_failed: "* &6Tracker {tracker}: &eLa recherche de mise à jour a échoué"
 # Message affiché quand la commande reload est utilisée et qu'un tracker ne s'initialise pas correctement
 tracker_disabled: "{prefix}&cLe tracker {tracker} n'a pas pu être rechargé, il a été désactivé."
+# Message affiché quand tu as mis un nom invalide dans la config d'un tracker
+tracker_disabled_invalid_name: "{prefix}&cNom du tracker {tracker} invalide, il a été désactivé."
 
 # Choix invalide dans le fichier de config pour les réglages par défaut des boussoles.
 invalid_choice: "{prefix}&cChoix par défaut invalide pour {type} ({key}), utilisation de ceux par défaut"

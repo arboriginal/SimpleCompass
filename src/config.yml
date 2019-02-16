@@ -1,5 +1,8 @@
-# Choose lang file you want to use, actually, only en and fr exists, but you can set what you want...
-language: en # If this lang file doesn't exist, a new one is created (copy of english, so you can edit it).
+# You can find the default config with description of parameters here:
+# https://github.com/arboriginal/SimpleCompass/blob/master/src/config.yml
+
+language: en # Choose lang file you want to use, actually, only en and fr exists, but you can set what you want: 
+# If this lang file doesn't exist, a new one is created (copy of english, so you can edit it).
 
 # If true, when you (re)load the plugin, it try to check if a new version is available
 check_update: true

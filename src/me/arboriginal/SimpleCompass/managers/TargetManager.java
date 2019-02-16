@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 import org.bukkit.entity.Player;
+import com.google.common.collect.ImmutableMap;
 import me.arboriginal.SimpleCompass.plugin.AbstractTracker;
 import me.arboriginal.SimpleCompass.plugin.SimpleCompass;
 
@@ -123,6 +124,8 @@ public class TargetManager {
       stop.forEach((tracker, stopped) -> {
         stopped.forEach(name -> {
           tracker.disable(player, name);
+          tracker.sendMessage(player, "target_auto_disabled",
+              ImmutableMap.of("tracker", tracker.trackerName(), "target", name));
         });
       });
     }

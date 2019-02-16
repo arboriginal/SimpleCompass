@@ -1,6 +1,7 @@
 package me.arboriginal.SimpleCompass.utils;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -18,6 +19,7 @@ import me.arboriginal.SimpleCompass.commands.AbstractCommand.SubCmds;
 import me.arboriginal.SimpleCompass.compasses.AbstractCompass.CompassModes;
 import me.arboriginal.SimpleCompass.compasses.AbstractCompass.CompassTypes;
 import me.arboriginal.SimpleCompass.managers.CompassManager.RequirementsSections;
+import me.arboriginal.SimpleCompass.plugin.AbstractTracker;
 import me.arboriginal.SimpleCompass.plugin.AbstractTracker.TrackingActions;
 import me.arboriginal.SimpleCompass.plugin.SimpleCompass;
 
@@ -222,6 +224,17 @@ public class ConfigUtil {
   }
 
   private void validateTrackerSettings() {
+    Iterator<String> it = sc.trackers.keySet().iterator();
+    while (it.hasNext()) {
+      String trackerID = it.next();
+
+      if (!((AbstractTracker) sc.trackers.get(trackerID)).trackerName().toLowerCase().matches("^[a-z0-9]+$")) {
+        it.remove();
+        sc.sendMessage(sc.getServer().getConsoleSender(), "tracker_disabled_invalid_name",
+            ImmutableMap.of("tracker", trackerID));
+      }
+    }
+    
     List<String> userPriorities = sc.config.getStringList("trackers_priorities");
     List<String> readPriorities = new ArrayList<String>();
 

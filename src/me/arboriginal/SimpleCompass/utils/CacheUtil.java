@@ -57,6 +57,7 @@ public class CacheUtil {
   }
 
   public Object get(UUID uid, String key) {
+    if (!datas.containsKey(uid)) return null;
     Data data = datas.get(uid).get(key);
     return (data != null && (data.expire == PERMANENT || data.expire > now())) ? data.value : null;
   }

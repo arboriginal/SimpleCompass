@@ -145,7 +145,7 @@ public class DataManager {
     String key = compassModeKey(player, type);
 
     return CompassModes.valueOf(users.contains(key) ? users.getString(key)
-        : sc.config.getDefaults().getString("compass." + type + ".default.mode"));
+        : sc.config.getString("compass." + type + ".default.mode"));
   }
 
   public String compassModeKey(Player player, CompassTypes type) {

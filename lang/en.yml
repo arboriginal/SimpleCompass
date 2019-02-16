@@ -20,6 +20,8 @@ tracker_check_update_available: "* &6Tracker {tracker}: &bversion &l{version}&b 
 tracker_check_update_failed: "* &6Tracker {tracker}: &eCan't check for update"
 # Message displayed when using the reload command and a tracker can't init correctly
 tracker_disabled: "{prefix}&cTracker {tracker} can't be reloaded, it has been disabled."
+# Message displayed when you set an invalid name in a tracker's config and can't override the value
+tracker_disabled_invalid_name: "{prefix}&cName of tracker {tracker} is invalid, it has been disabled."
 
 # Invalid choice in the config file for compasses default settings.
 invalid_choice: "{prefix}&cInvalid default choice for {type} ({key}), using default"
