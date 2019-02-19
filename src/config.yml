@@ -200,6 +200,7 @@ delays:
   fix_uuid: 50           # (ticks)    Time (after login) before to fix UUID which can happens, especialy in offline mode.
   option_take_effect: 20 # (ticks)    Time to wait before a new open takes effect in the currently active player compasses.
   refresh_status: 20     # (ticks)    Refresh compass status after specific actions (enter vehicle, using elytra, ...).
+  pickup_refresh: 50     # (ticks)    Refresh compass status after player has pickup some items.
   target_cancel: 2       # (ticks)    Time after target creation input has been sent to perform the action
   # If compasses not appearing after (re)login, try a higher value. You can verify it's related by using /scompass-reload.
   # If after running this command, the compasses re-appear, the cause is a wrong player UUID discovery.

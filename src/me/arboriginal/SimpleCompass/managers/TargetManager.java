@@ -2,6 +2,7 @@ package me.arboriginal.SimpleCompass.managers;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
 import org.bukkit.entity.Player;
@@ -94,38 +95,60 @@ public class TargetManager {
     sc.datas.activeTargetDel(player, type, name);
   }
 
-  public HashMap<String, ArrayList<double[]>> getTargetsCoords(Player player) {
-    HashMap<String, ArrayList<double[]>>        list = new HashMap<String, ArrayList<double[]>>();
+  public HashMap<String, HashMap<String, ArrayList<double[]>>> getTargetsCoords(Player player) {
+    HashMap<String, HashMap<String, ArrayList<double[]>>> list = new HashMap<String, HashMap<String, ArrayList<double[]>>>();
+    list.put("on", new HashMap<String, ArrayList<double[]>>());
+    list.put("off", new HashMap<String, ArrayList<double[]>>());
+
     HashMap<AbstractTracker, ArrayList<String>> stop = new HashMap<AbstractTracker, ArrayList<String>>();
     UUID                                        uid  = player.getUniqueId();
 
+    List<String> invalids = new ArrayList<String>();
+
     for (String trackerID : sc.trackers.keySet()) {
-      if (!activeTargets.get(trackerID).containsKey(uid)) continue;
       AbstractTracker tracker = sc.trackers.get(trackerID);
       if (tracker == null) continue;
 
-      ArrayList<double[]> sublist = new ArrayList<double[]>();
-      ArrayList<String>   closest = new ArrayList<String>();
+      HashMap<String, double[]> sublistOn = new HashMap<String, double[]>();
 
-      for (String name : activeTargets.get(trackerID).get(uid)) {
-        double[] coords = tracker.get(player, name);
+      if (activeTargets.get(trackerID).containsKey(uid)) {
+        ArrayList<String> closest = new ArrayList<String>();
 
-        if (coords == null || tracker.playerIsClose(player, coords))
-          closest.add(name);
-        else
-          sublist.add(coords);
+        Iterator<String> it = activeTargets.get(trackerID).get(uid).iterator();
+        while (it.hasNext()) {
+          String   name   = it.next();
+          double[] coords = tracker.get(player, name);
+          if (coords == null) invalids.add(trackerID + ":" + name);
+          if (coords == null || tracker.playerIsClose(player, coords))
+            closest.add(name);
+          else
+            sublistOn.put(name, coords);
+        }
+
+        if (!sublistOn.isEmpty()) list.get("on").put(trackerID, new ArrayList<double[]>(sublistOn.values()));
+        if (!closest.isEmpty()) stop.put(tracker, closest);
       }
 
-      if (!sublist.isEmpty()) list.put(trackerID, sublist);
-      if (!closest.isEmpty()) stop.put(tracker, closest);
+      if (tracker.settings.getBoolean("settings.inactive_target", false)) {
+        ArrayList<double[]> sublistOff = new ArrayList<double[]>();
+
+        for (String name : tracker.availableTargets(player, "")) {
+          if (sublistOn.containsKey(name)) continue;
+          double[] coords = tracker.get(player, name);
+          if (coords != null) sublistOff.add(coords);
+        }
+
+        if (!sublistOff.isEmpty()) list.get("off").put(trackerID, sublistOff);
+      }
     }
 
     if (!stop.isEmpty()) {
       stop.forEach((tracker, stopped) -> {
         stopped.forEach(name -> {
           tracker.disable(player, name);
-          tracker.sendMessage(player, "target_auto_disabled",
-              ImmutableMap.of("tracker", tracker.trackerName(), "target", name));
+          if (!invalids.contains(tracker.trackerID() + ":" + name))
+            tracker.sendMessage(player, "target_auto_disabled",
+                ImmutableMap.of("tracker", tracker.trackerName(), "target", name));
         });
       });
     }

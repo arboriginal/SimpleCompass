@@ -7,6 +7,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityPickupItemEvent;
 import org.bukkit.event.entity.EntityToggleGlideEvent;
+import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryOpenEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
@@ -43,7 +44,7 @@ public class Listeners implements Listener {
   public void onEntityPickupItem(EntityPickupItemEvent event) {
     if (event.isCancelled() || !(event.getEntity() instanceof Player)) return;
 
-    sc.tasks.set(TasksTypes.REFRESH_STATUS, (Player) event.getEntity());
+    sc.tasks.set(TasksTypes.REFRESH_STATUS, (Player) event.getEntity(), sc.config.getInt("delays.pickup_refresh"));
   }
 
   @EventHandler
@@ -81,6 +82,12 @@ public class Listeners implements Listener {
     if (!(event.getPlayer() instanceof Player)) return;
 
     sc.tasks.set(TasksTypes.REFRESH_STATUS, event.getPlayer());
+  }
+
+  @EventHandler
+  public void onPlayerDeath(PlayerDeathEvent event) {
+    if (!(event.getEntity() instanceof Player)) return;
+    sc.compasses.removeCompass((Player) event.getEntity());
   }
 
   @EventHandler

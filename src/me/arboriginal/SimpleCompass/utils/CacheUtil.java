@@ -73,6 +73,7 @@ public class CacheUtil {
   }
 
   public void set(UUID uid, String key, Object value, int duration) {
+    if (!datas.containsKey(uid)) init(uid);
     datas.get(uid).put(key, new Data((duration == PERMANENT) ? PERMANENT : now() + duration, value));
   }
 

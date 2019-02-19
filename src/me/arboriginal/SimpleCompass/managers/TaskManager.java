@@ -91,6 +91,11 @@ public class TaskManager {
             sc.compasses.removeCompass(CompassTypes.BOSSBAR, player);
             sc.compasses.refreshCompassState(player);
             clear(type, uid, this);
+
+            if (sc.trackers.isEmpty()) return;
+            sc.trackers.forEach((trackerID, tracker) -> {
+              for (String name : tracker.autoloadTargets(player, "")) tracker.activate(player, name, false);
+            });
           }
         };
 
@@ -123,7 +128,8 @@ public class TaskManager {
           }
         };
 
-        task.runTaskLaterAsynchronously(sc, sc.config.getInt("delays.refresh_status"));
+        task.runTaskLaterAsynchronously(sc,
+            (data == null || !(data instanceof Integer)) ? sc.config.getInt("delays.refresh_status") : (int) data);
         break;
 
       case REMOVEWARNING:

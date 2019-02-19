@@ -249,6 +249,18 @@ public abstract class AbstractTracker {
     return list;
   }
 
+  public List<String> autoloadTargets(Player player, String startWith) {
+    List<String> list = new ArrayList<String>();
+
+    if (settings.getBoolean("settings.autoload_target", false)) {
+      String perm = "scompass.track.auto." + trackerID() + ".";
+      for (String name : availableTargets(player, startWith))
+        if (player.hasPermission(perm + "*") || player.hasPermission(perm + name)) list.add(name);
+    }
+
+    return list;
+  }
+
   public boolean del(Player player, String name) {
     String key = key(player, name);
 
@@ -413,7 +425,7 @@ public abstract class AbstractTracker {
   }
 
   public String key(Player player, String name) {
-    return sc.datas.getKey(player, trackerID() + (name == null ? "" : "." + name.toLowerCase()));
+    return sc.datas.getKey(player, trackerID() + (name == null ? "" : "." + name));
   }
 
   public boolean save(String key, Object value) {
