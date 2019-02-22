@@ -148,16 +148,22 @@ public abstract class AbstractCompass {
     for (String trackerID : sc.targets.trackersPriority) {
       AbstractTracker tracker = sc.trackers.get(trackerID);
       if (tracker == null) continue;
+      int    hlMaxAngle = tracker.settings.getInt("settings.hl_angle", 0);
+      String hlMarker   = null, hlSymbol = null;
+
+      if (hlMaxAngle > 0) {
+        hlMarker = tracker.settings.getString("settings.hl_temp", null);
+        hlSymbol = tracker.settings.getString("settings.hl_symbol", null);
+        if (hlMarker != null && hlSymbol != null) placeholders.put(hlMarker, hlSymbol + sepColor);
+      }
 
       for (String targetType : targets.keySet()) {
         ArrayList<double[]> coords = targets.get(targetType).get(trackerID);
         if (coords == null || coords.isEmpty()) continue;
+        boolean active = targetType.equals("on");
 
-        String marker = tracker.settings
-            .getString("settings." + (targetType.equals("off") ? "inactive_" : "") + "temp");
-        String symbol = tracker.settings
-            .getString("settings." + (targetType.equals("off") ? "inactive_" : "") + "symbol");
-
+        String marker = tracker.settings.getString("settings." + (active ? "" : "inactive_") + "temp");
+        String symbol = tracker.settings.getString("settings." + (active ? "" : "inactive_") + "symbol");
         placeholders.put(marker, symbol + sepColor);
 
         for (double[] target : coords) {
@@ -167,11 +173,17 @@ public abstract class AbstractCompass {
           Vector  lookAt   = refPos.getDirection().setY(0);
           boolean viewable = (lookAt.dot(blockDirection) > 0);
           double  angle    = Math.toDegrees(blockDirection.angle(lookAt.crossProduct(new Vector(0, 1, 0))));
-          if (!viewable) angle = (angle > 90) ? 180 : 0;
+          String  tMarker  = marker;
+
+          if (!viewable)
+            angle = (angle > 90) ? 180 : 0;
+          else if (active && hlMarker != null && hlSymbol != null && angle > 90 - hlMaxAngle && angle < 90 + hlMaxAngle)
+            tMarker = hlMarker;
+
           int start = compass.length() - (int) Math.round(2 * angle * compass.length() / 360);
 
-          compass = (start < 2) ? marker + compass.substring(start + 1)
-              : compass.substring(0, start - 1) + marker + compass.substring(start);
+          compass = (start < 2) ? tMarker + compass.substring(start + 1)
+              : compass.substring(0, start - 1) + tMarker + compass.substring(start);
         }
       }
     }

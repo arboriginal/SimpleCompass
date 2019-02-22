@@ -10,7 +10,7 @@ You can download the last release here: [SimpleCompass.jar](https://github.com/a
 
 ## Permissions
 
-All permissions are listed with a short description in this [plugin.yml](https://github.com/arboriginal/SimpleCompass/blob/master/src/plugin.yml).
+All permissions are listed with a short description in this [plugin.yml](https://github.com/arboriginal/SimpleCompass/blob/master/src/plugin.yml#L41).
 
 ## Commands
 
