@@ -2,6 +2,7 @@ package me.arboriginal.SimpleCompass.plugin;
 
 import java.util.HashMap;
 import java.util.UUID;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -42,24 +43,20 @@ public class Listeners implements Listener {
 
   @EventHandler
   public void onEntityPickupItem(EntityPickupItemEvent event) {
-    if (event.isCancelled() || !(event.getEntity() instanceof Player)) return;
-
+    if (event.isCancelled() || !isPlayer(event.getEntity())) return;
     sc.tasks.set(TasksTypes.REFRESH_STATUS, (Player) event.getEntity(), sc.config.getInt("delays.pickup_refresh"));
   }
 
   @EventHandler
   public void onEntityToggleGlide(EntityToggleGlideEvent event) {
-    if (event.isCancelled() || !(event.getEntity() instanceof Player)) return;
-
+    if (event.isCancelled() || !isPlayer(event.getEntity())) return;
     sc.tasks.set(TasksTypes.REFRESH_STATUS, (Player) event.getEntity());
   }
 
   @EventHandler
   public void onInventoryClose(InventoryCloseEvent event) {
     InventoryHolder holder = event.getInventory().getHolder();
-
-    if (!(holder instanceof Player)) return;
-
+    if (!(holder instanceof Player) || !isPlayer((Player) holder)) return;
     sc.tasks.set(TasksTypes.REFRESH_STATUS, (Player) holder);
   }
 
@@ -79,14 +76,13 @@ public class Listeners implements Listener {
 
   @EventHandler
   public void onPlayerCommandSend(PlayerCommandSendEvent event) {
-    if (!(event.getPlayer() instanceof Player)) return;
-
+    if (!isPlayer(event.getPlayer())) return;
     sc.tasks.set(TasksTypes.REFRESH_STATUS, event.getPlayer());
   }
 
   @EventHandler
   public void onPlayerDeath(PlayerDeathEvent event) {
-    if (!(event.getEntity() instanceof Player)) return;
+    if (!isPlayer(event.getEntity())) return;
     sc.compasses.removeCompass((Player) event.getEntity());
   }
 
@@ -134,15 +130,13 @@ public class Listeners implements Listener {
 
   @EventHandler
   public void onVehicleEnter(VehicleEnterEvent event) {
-    if (event.isCancelled() || !(event.getEntered() instanceof Player)) return;
-
+    if (event.isCancelled() || !isPlayer(event.getEntered())) return;
     sc.tasks.set(TasksTypes.REFRESH_STATUS, (Player) event.getEntered());
   }
 
   @EventHandler
   public void onVehicleExit(VehicleExitEvent event) {
-    if (event.isCancelled() || !(event.getExited() instanceof Player)) return;
-
+    if (event.isCancelled() || !isPlayer(event.getExited())) return;
     sc.tasks.set(TasksTypes.REFRESH_STATUS, (Player) event.getExited());
   }
 
@@ -151,5 +145,13 @@ public class Listeners implements Listener {
     if (event.isCancelled()) return;
 
     sc.compasses.commandTrigger(event.getCommand());
+  }
+
+  // -----------------------------------------------------------------------------------------------
+  // Private methods
+  // -----------------------------------------------------------------------------------------------
+
+  private boolean isPlayer(Entity entity) {
+    return (entity instanceof Player) && !entity.hasMetadata("NPC");
   }
 }
