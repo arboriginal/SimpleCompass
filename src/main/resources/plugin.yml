@@ -1,0 +1,144 @@
+name: ${project.name}
+description: ${project.description}
+version: ${project.version}
+
+author: arboriginal
+website: https://www.spigotmc.org/resources/${spigot-id}/
+dev-url: https://github.com/arboriginal/${project.artifactId}
+
+main: ${project.groupId}.${project.artifactId}.${spigot-main}
+api-version: ${spigot-api}
+
+depend: [ ]
+softdepend: [ ]
+database: false
+
+commands:
+  scompass:
+    description: Use the SimpleCompass interface
+    permission: scompass.interface
+
+  scompass-reload:
+    description: Reload SimpleCompass configuration
+    permission: scompass.reload
+    aliases: screload
+
+  scompass-toggle:
+    description: Quickly toggle ON/OFF your compass(es)
+    permission: scompass.toggle
+    aliases: sctoggle
+
+  scompass-option:
+    description: Choose personal options for SimpleCompass
+    permission: scompass.option
+    # Also require scompass.use.ACTIONBAR or scompass.use.BOSSBAR or both, and at least an option
+    usage: /<command> [<[option] [type]>]
+    aliases: scoption
+
+  scompass-track: # Only available if at least one tracker is active
+    description: Manage SimpleCompass trackers
+    permission: scompass.track
+    # Also require scompass.use.ACTIONBAR or scompass.use.BOSSBAR or both, and at least an option
+    usage: /<command> <tracker> <action> <target> [<x> <z>]
+    aliases: sctrack
+
+permissions:
+  scompass.reload:
+    description: Allows to reload the configuration.
+    default: op
+
+  scompass.use: # This is the "main" permission, without this one, others have no effect (except scompass.reload).
+    description: Allows to use compass.
+    default: true
+
+  scompass.*:
+    description: Grants all permissions for this plugin.
+    default: op
+    children:
+      scompass.interface: true
+      scompass.reload: true
+      scompass.help: true
+      scompass.use: true
+      scompass.use.*: true
+      scompass.use.free: true
+      scompass.toggle: true
+      scompass.option: true
+      scompass.option.*: true
+      scompass.track.*: true
+
+  scompass.interface: # Require scompass.use
+    description: Allows the use of scompass command
+    default: true
+
+  scompass.help:
+    description: Allows to display the command help.
+    default: true
+
+  scompass.toggle: # Technically works without scompass.use, but have no interest without...
+    description: Allows to use /scompass-toggle command.
+    default: true
+
+  scompass.use.*:
+    description: Allows to use all compass types.
+    default: false
+    children:
+      scompass.use: true
+      scompass.use.ACTIONBAR: true
+      scompass.use.BOSSBAR: true
+
+  scompass.use.ACTIONBAR: # Require scompass.use
+    description: Allows to use actionbar compass.
+    default: true
+
+  scompass.use.BOSSBAR: # Require scompass.use
+    description: Allows to use bossbar compass.
+    default: true
+
+  scompass.use.free: # Require scompass.use
+    description: Allows to use compass without consuming an item (if items are consumed).
+    default: false
+
+  scompass.option.*: # Require scompass.use
+    description: Allows to use all the options.
+    default: op
+    children:
+      scompass.option: true
+      scompass.option.ALWAYS: true
+      scompass.option.ELYTRA: true
+      scompass.option.ELYTRA_VEHICLE: true
+      scompass.option.VEHICLE: true
+      scompass.option.DISABLED: true
+
+  scompass.option: # Require scompass.use
+    description: Allows the use of scompass-option commande. Require scompass.use
+    default: true
+
+  scompass.option.ALWAYS: # Require scompass.use
+    description: Allows to use the option "Always activated".
+    default: true
+
+  scompass.option.ELYTRA: # Require scompass.use
+    description: Allows to use the option "Only activated when using elytra".
+    default: true
+
+  scompass.option.ELYTRA_VEHICLE: # Require scompass.use
+    description: Allows to use the option "Only activated when using elytra or when a vehicle".
+    default: true
+
+  scompass.option.VEHICLE: # Require scompass.use
+    description: Allows to use the option "Only activated when on a vehicle".
+    default: true
+
+  scompass.option.DISABLED: # Require scompass.use
+    description: Allows to use the option "Disabled".
+    default: true
+
+  scompass.track: # Require scompass.use
+    description: Allows the use of scompass-track command.
+    default: true
+
+  scompass.track.*: # Require scompass.use
+    description: Allows the use of all installed trackers.
+    default: false
+    # Note: To give the permission to use the tracker "foo", give permission "scompass.track.foo"
+    # see trackers addon's README.md files on their github pages for more info.

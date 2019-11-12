@@ -4,17 +4,18 @@ SimpleCompass is a small plugin for [Spigot](https://www.spigotmc.org) Minecraft
 
 ## How to install
 
-There is no dependencies, simply drop the jar file into your plugin directory, then restart (or reload) your server. All configuration parameters are explained in this [config.yml](https://github.com/arboriginal/SimpleCompass/blob/master/src/config.yml).
+There is no dependencies, simply drop the jar file into your plugin directory, then restart (or reload) your server. All configuration parameters are explained in this [config.yml](https://github.com/arboriginal/SimpleCompass/blob/master/src/main/resources/config.yml).
 
 You can download the last release here: [SimpleCompass.jar](https://github.com/arboriginal/SimpleCompass/releases).
 
 ## Permissions
 
-All permissions are listed with a short description in this [plugin.yml](https://github.com/arboriginal/SimpleCompass/blob/master/src/plugin.yml#L41).
+All permissions are listed with a short description in this [plugin.yml](https://github.com/arboriginal/SimpleCompass/blob/master/src/main/resources/plugin.yml#L41).
 
 ## Commands
 
 * **/scompass** visual interface (clickable book)
+* **/scompass-toggle** to quickly toggle on/off your compass(es)
 * **/scompass-option** will show the menu to choose where and when display the compass
 * **/sctrack** to tracker a position, coordinates or a player (see below)
 * **/scompass-reload** will reload the configuration
