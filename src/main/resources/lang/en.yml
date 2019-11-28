@@ -152,21 +152,27 @@ commands:
       buttons: # (You can order options of this list.)
         ASK:
           text: "&8[&3&l♪&8]"
+          text_inactive: "&7[&l♪&7]"
           hover: "&6Click to ask for a tracking"
         START:
           text: "&8[&2&l⚑&8]"
+          text_inactive: "&7[&l⚑&7]"
           hover: "&6Click to start a tracking"
         STOP:
           text: "&8[&4&l⚑&8]"
+          text_inactive: "&7[&l⚑&7]"
           hover: "&6Click to stop a tracking"
         ADD:
           text: "&8[&2&l+&8]"
+          text_inactive: "&7[&l+&7]"
           hover: "&6Click to add a tracking"
         DEL:
           text: "&8[&4&l-&8]"
+          text_inactive: "&7[&l-&7]"
           hover: "&6Click to remove a tracking"
         HELP:
           text: "&8[&6&l?&8]"
+          text_inactive: ""
           hover: "&6Click to display help"
     books:
       options:

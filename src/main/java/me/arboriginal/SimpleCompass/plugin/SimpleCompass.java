@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import org.apache.commons.lang.time.DurationFormatUtils;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -68,7 +69,7 @@ public class SimpleCompass extends JavaPlugin implements TabCompleter {
             getServer().spigot();
         }
         catch (Exception e) {
-            getServer().getPluginManager().disablePlugin(this);
+            Bukkit.getPluginManager().disablePlugin(this);
             getLogger().severe("This plugin only works on Spigot servers!");
             // No need to go on, it will not work
             return;
@@ -84,7 +85,7 @@ public class SimpleCompass extends JavaPlugin implements TabCompleter {
         getCommand("scompass").setExecutor(new InterfaceCommand(this));
 
         listeners = new Listeners(this);
-        getServer().getPluginManager().registerEvents(listeners, this);
+        Bukkit.getPluginManager().registerEvents(listeners, this);
     }
 
     @Override

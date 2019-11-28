@@ -32,4 +32,4 @@ To use the command **sctrack**, you need at least one tracker addon. You can fin
 * [PlayerTracker](https://github.com/arboriginal/SCT-PlayerTracker): Allows to track players positions.
 * [PositionTracker](https://github.com/arboriginal/SCT-PositionTracker): Allows to track static positions.
 
-Have a look at the [Spigot plugin thread](https://www.spigotmc.org/threads/simplecompass.351093/), maybe other addon (made by other developers) will be listed.
+Have a look at the [Spigot plugin thread](https://www.spigotmc.org/threads/simplecompass.351093/), maybe other addons (made by other developers) will be listed.

@@ -141,7 +141,7 @@ public class InterfaceCommand extends AbstractCommand implements CommandExecutor
                 "commands." + mainCommand + ".track.buttons").getKeys(false);
 
         for (String trackerID : sc.targets.trackersPriority)
-            if (player.hasPermission("scompass.track." + trackerID)) trackers.add(trackerID);
+            if (sc.targets.canUseTracker(player, trackerID)) trackers.add(trackerID);
 
         for (String[] part : chunk(trackers.toArray(new String[trackers.size()]),
                 sc.locale.getInt("commands." + mainCommand + ".track.per_page"))) {
@@ -158,15 +158,17 @@ public class InterfaceCommand extends AbstractCommand implements CommandExecutor
                 for (String actionName : ordered) {
                     TrackingActions action; // @formatter:off
                     try { action = TrackingActions.valueOf(actionName); } catch (Exception e) { continue; }
-                    String text = sc.prepareMessage("commands." + mainCommand + ".track.buttons." + action + ".text");
                     // @formatter:on
                     if (!actions.contains(action)) {
-                        commands.put("{" + action + "}", ImmutableMap.of("text", inactiveCommandText(text)));
+                        commands.put("{" + action + "}", ImmutableMap.of("text", sc.prepareMessage(
+                                "commands." + mainCommand + ".track.buttons." + action + ".text_inactive")));
                         continue;
                     }
 
-                    commands.put("{" + action + "}", ImmutableMap.of("text", text, "hover",
-                            sc.prepareMessage("commands." + mainCommand + ".track.buttons." + action + ".hover"),
+                    commands.put("{" + action + "}", ImmutableMap.of("text",
+                            sc.prepareMessage("commands." + mainCommand + ".track.buttons." + action + ".text"),
+                            "hover", sc.prepareMessage(
+                                    "commands." + mainCommand + ".track.buttons." + action + ".hover"),
                             "click", "/" + mainCommand
                                     + " " + (tracker.requireTarget(action) != TargetSelector.NONE
                                             ? SELECT_TARGET
@@ -182,16 +184,6 @@ public class InterfaceCommand extends AbstractCommand implements CommandExecutor
 
             meta.spigot().addPage(content.stream().toArray(BaseComponent[]::new));
         }
-    }
-
-    private String inactiveCommandText(String text) {
-        String[] inactiveText = text.replace("&", "§").split("§");
-
-        String out = "§7";
-        for (int i = 0; i < inactiveText.length; i++) if (inactiveText[i].length() > 1)
-            out += (inactiveText[i].charAt(0) == 'l') ? "§" + inactiveText[i] + "§7" : inactiveText[i].substring(1);
-
-        return out;
     }
 
     private BaseComponent[] buildPage(Player player, CompassTypes type, List<String> optionsList) {

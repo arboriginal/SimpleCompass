@@ -105,6 +105,7 @@ public class Listeners implements Listener {
         Player player = event.getPlayer();
         UUID   uid    = player.getUniqueId();
 
+        sc.compasses.removeCompass(player);
         locks.remove(uid);
         sc.tasks.clear(player);
         sc.targets.unloadTargets(player);

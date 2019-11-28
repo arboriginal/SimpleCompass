@@ -152,21 +152,27 @@ commands:
       buttons: # (Tu peux ordonner les options de cette liste.)
         ASK:
           text: "&8[&3&l♪&8]"
+          text_inactive: "&7[&l♪&7]"
           hover: "&6Clique pour demander un pistage"
         START:
           text: "&8[&2&l⚑&8]"
+          text_inactive: "&7[&l⚑&7]"
           hover: "&6Clique pour commencer un pistage"
         STOP:
           text: "&8[&4&l⚑&8]"
+          text_inactive: "&7[&l⚑&7]"
           hover: "&6Clique pour arrêter un pistage"
         ADD:
           text: "&8[&2&l+&8]"
+          text_inactive: "&7[&l+&7]"
           hover: "&6Clique pour ajouter un pistage"
         DEL:
           text: "&8[&4&l-&8]"
+          text_inactive: "&7[&l-&7]"
           hover: "&6Clique pour supprimer un pistage"
         HELP:
           text: "&8[&6&l?&8]"
+          text_inactive: ""
           hover: "&6Clique pour afficher l'aide"
     books:
       options:

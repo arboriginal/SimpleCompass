@@ -4,6 +4,8 @@
 # You will find an explanation of all parameters here:
 # https://github.com/arboriginal/${project.artifactId}/blob/master/src/main/resources/config.yml
 # .
+# Optional trackers list: https://github.com/arboriginal/SimpleCompass#trackers-addons ("Trackers addons" section)
+# .
 # Personal message: I'd love to have videos showing and explaining the plugin in use, but I'm not good at making vids...
 # If you are able to make one, send me the link (preferred on Youtube) and I will include it (with credit and link)
 # on the plugin page. English language is IMHO the most important, because it will be understandable by the most,
